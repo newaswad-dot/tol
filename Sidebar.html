@@ -508,6 +508,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
   </div>
 
   <script>
+    (function(){
     // عناصر عامة
     const reloadBtn      = document.getElementById('reloadBtn');
     const loadNote       = document.getElementById('loadNote');
@@ -572,7 +573,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
     // عنصر لعرض اسم العميل (من عمود B)
     const nameText   = document.getElementById('nameText');
-const execCard  = document.getElementById('execCard');
+    const execCard  = document.getElementById('execCard');
     const advNote  = document.getElementById('advNote');
     const sheetSelect   = document.getElementById('sheetSelect');
     const refreshSheetsBtn = document.getElementById('refreshSheetsBtn');
@@ -1903,6 +1904,10 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
       initSalaryCorrectionSwitch();
       setTimeout(refreshCountsLive, 600);
     });
+    window.renderResult = renderResult;
+    window.renderLoading = renderLoading;
+    window.justColored = justColored;
+  })();
   </script>
   <style>
 @media (max-width: 1059px){
