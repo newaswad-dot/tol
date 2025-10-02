@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>أداة البحث</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --border:#e6e8ef; --text:#1f2937; --muted:#6b7280;
+      --blue:#2563eb; --blueH:#1d4ed8; --green:#16a34a; --greenH:#15803d;
+      --red:#dc2626; --redH:#b91c1c; --amber:#f59e0b; --violet:#8b5cf6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; padding:14px; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+
+    .container{max-width:1100px; margin:0 auto; display:grid; gap:12px}
+    @media(min-width:1060px){
+      .container{ grid-template-columns: 1fr 1fr; align-items:start; }
+      #advCard{ grid-column:1 }
+      #personCard{ grid-column:2 }
+      .span2{ grid-column:1 / span 2; }
+    }
+    @media(max-width:1059px){
+      #advCard{ order:1 }
+      #personCard{ order:2 }
+    }
+
+    .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
+    .row.stretch > *{flex:1}
+    label.small{font-size:12px; color:var(--muted); margin-bottom:6px; display:block}
+    input[type="text"], input[type="number"], select{
+      width:100%; padding:10px 12px; border:1px solid var(--border);
+      border-radius:10px; font-size:14px; background:#fff
+    }
+    button{border:0; border-radius:10px; padding:10px 12px; font-weight:600; cursor:pointer}
+    .btn-blue{background:var(--blue); color:#fff} .btn-blue:hover{background:var(--blueH)}
+    .btn-green{background:var(--green); color:#fff} .btn-green:hover{background:var(--greenH)}
+    .btn-red{background:var(--red); color:#fff} .btn-red:hover{background:var(--redH)}
+    .btn-ghost{background:#0000; border:1px solid var(--border); color:var(--text)}
+    .muted{font-size:11px; color:var(--muted)}
+
+    .results{
+      min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      gap:10px; text-align:center; background:white; border-radius:12px; padding:16px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.06);
+    }
+    .badges{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center}
+    .badge{font-size:12px; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid transparent; letter-spacing:.2px;}
+    .badge--admin{ background:#fff7ed; color:#9a3412; border-color:#fdba74; }
+    .badge--withdraw{ background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
+    .badge--agent{ background:#ecfdf5; color:#065f46; border-color:#6ee7b7; }
+    .badge--missing{ background:#f9fafb; color:#6b7280; border-color:#ef4444; }
+    .badge--loading{ background:#f3f4f6; color:#6b7280; border-color:#e5e7eb; }
+    .badge--dup{ background:#fef2f2; color:#b91c1c; border-color:#fca5a5; }
+
+    .amountBig{ font-size:44px; font-weight:900; line-height:1; }
+    .subline{ font-size:12px; color:#6b7280; }
+
+    .lastid{display:inline-flex; gap:6px; align-items:center; padding:6px 8px; border-radius:999px;
+      border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px}
+
+    #resultsBox, #advCard, #personCard { position:relative; }
+    @keyframes flashGlowBlue  { 0%{box-shadow:0 0 0 0 rgba(59,130,246,0)} 25%{box-shadow:0 0 0 6px rgba(59,130,246,.22)} 100%{box-shadow:0 0 0 0 rgba(59,130,246,0)} }
+    @keyframes flashGlowGreen { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0)} 25%{box-shadow:0 0 0 6px rgba(16,185,129,.22)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
+    .flash-blue { animation:flashGlowBlue  .42s ease; }
+    .flash-green{ animation:flashGlowGreen .42s ease; }
+
+    .row.stretch > button{ order:-1; flex:0 0 auto; min-width:110px; }
+    .row.stretch > input, .row.stretch > select{ flex:1 1 auto; min-width:0; }
+
+    /* Dark */
+    body.dark{ background:#0f1115; color:#e5e7eb;}
+    body.dark .card{ background:#1f232b; border-color:#2d323c; color:#e5e7eb; }
+    body.dark input, body.dark select{ background:#111827; color:#f9fafb; border-color:#374151;}
+    body.dark .results{ background:#1f232b; }
+    body.dark .amountBig{ color:#22c55e; text-shadow:0 0 6px rgba(34,197,94,.7); }
+    body.dark .lastid{ background:#111827; border-color:#2a2f39; color:#e5e7eb }
+    body.dark .muted{ color:#cbd5e1; }
+    body.dark .btn-ghost{ color:#e5e7eb; }
+    body.dark .badge{ border-color:#374151; }
+
+    /* iOS toggles */
+    .ios-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+    .ios-toggle input{opacity:0;width:0;height:0}
+    .slider{position:relative;display:inline-block;width:50px;height:28px;background:#cfcfcf;border-radius:28px;transition:.25s}
+    .slider:before{content:"";position:absolute;left:3px;bottom:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.25s}
+    input:checked + .slider{background:#34c759}
+    input:checked + .slider:before{transform:translateX(22px)}
+    body.dark input:checked + .slider{background:#22c55e}
+    .switch-label{font-size:13px;font-weight:600;white-space:nowrap}
+    .toggle-chip{display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--border);border-radius:14px;background:#fafafa}
+    body.dark .toggle-chip{background:#111827;border-color:#2d323c}
+    .toggles-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  
+/* Mobile-first tweaks */
+html, body { max-width: 100%; overflow-x: hidden; }
+.container { width: 100%; max-width: 940px; margin: 0 auto; padding: 10px; }
+@media (max-width: 640px){
+  .container{ max-width: 100% !important; padding: 12px !important; }
+  .card{ border-radius: 14px !important; }
+  .row{ flex-wrap: wrap !important; }
+  input, button, select{ font-size: 16px !important; }
+}
+
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- تحميل البيانات -->
+    <div class="card span2" id="loadCard">
+      <div class="row stretch">
+        <button id="reloadBtn" class="btn-red">تحميل البيانات</button>
+      </div>
+      <div id="loadNote" class="muted" style="margin-top:6px"></div>
+    </div>
+
+    <!-- البحث -->
+    <div class="card" id="searchCard">
+      <label class="small">ID للبحث</label>
+      <div class="row stretch">
+        <button id="pasteSearchBtn" class="btn-blue">لصق ثم بحث</button>
+        <input id="idInput" type="text" placeholder="أدخل ID هنا" autocomplete="off" inputmode="numeric">
+      </div>
+      <div class="row" style="margin-top:6px; justify-content:space-between">
+        <div id="pasteHint" class="muted"></div>
+        <div id="lastIdPill" class="lastid" style="display:none">آخر ID: <b id="lastIdText"></b></div>
+      </div>
+    </div>
+
+    <!-- النتائج -->
+    <div class="card results" id="resultsBox">
+      <div class="badges">
+        <span id="statusBadge" class="badge badge--loading">—</span>
+        <span id="dupBadge" class="badge badge--dup" style="display:none">مكرر</span>
+        <span id="statusChipsRow"></span>
+      </div>
+      <!-- اسم العميل من عمود B -->
+      <div id="nameText" class="subline">—</div>
+            <div id="amountText" class="amountBig">—</div>
+      <div id="multiText" class="subline"></div>
+      <div id="extraDupInfo" class="muted" style="margin-top:4px"></div>
+    </div>
+
+    <!-- الميزات الذكية -->
+    <div class="card" id="advCard">
+      <button id="advRunBtn" class="btn-green" style="width:100%;padding:14px;font-size:16px;font-weight:700;margin-bottom:12px">
+        تنفيذ (حسب النتيجة)
+      </button>
+      <div id="advNote" class="muted" style="margin-bottom:12px"></div>
+
+      <div class="row" style="gap:8px; align-items:center">
+        <label class="small" style="margin:0;min-width:60px">الهدف</label>
+        <select id="sheetSelect" style="flex:1"></select>
+
+        <label class="small" style="margin:0;min-width:70px">التنفيذ</label>
+        <select id="targetMode" style="flex:1">
+          <option value="agent">الوكيل فقط</option>
+          <option value="both" selected>الإدارة + الوكيل</option>
+        </select>
+
+        <button id="refreshSheetsBtn" class="btn-ghost" title="تحديث قائمة الأوراق">↻</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;display:flex;align-items:center;gap:8px">
+          <input id="adminColor" type="color" value="#fde68a"
+            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
+          <label class="small" style="margin:0">لون الإدارة</label>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px">
+          <input id="withdrawColor" type="color" value="#ddd6fe"
+            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
+          <label class="small" style="margin:0">لون سحب وكالة</label>
+        </div>
+      </div>
+
+      <div class="row stretch" style="margin-top:10px">
+        <input id="newSheetName" type="text" placeholder="اسم ورقة جديدة (داخل الإدارة)">
+        <button id="createSheetBtn" class="btn-ghost">إنشاء</button>
+      </div>
+
+      <div class="row" style="margin-top:12px; align-items:center; gap:12px; flex-wrap:wrap">
+        <div class="row" style="gap:8px; align-items:center">
+          <label class="small" style="margin:0">الخصم %</label>
+          <input id="discountInput" type="number" min="0" max="100" value="0" step="1" style="width:110px">
+        </div>
+
+        <div class="toggle-chip">
+          <span class="switch-label">الخصم لحظيًا</span>
+          <label class="ios-toggle">
+            <input id="applyDiscountToMessage" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-chip">
+          <span class="switch-label">تصحيح الراتب</span>
+          <label class="ios-toggle">
+            <input id="enableSalaryCorrection" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div id="aiMountHere"></div>
+      <div id="afterAiHook"></div>
+    </div>
+
+    <!-- بيانات صاحب الـID -->
+    <div class="card" id="personCard">
+      <div class="row" style="justify-content:space-between; align-items:center">
+        <strong>بيانات صاحب الـID</strong>
+        <div class="row" style="gap:6px; flex:0 0 auto">
+          <button id="copyMsgBtn" class="btn-green">نسخ الرسالة</button>
+          <button id="colorAllBtn" class="btn-ghost" title="تلوين كل الـIDs لهذا الشخص بسرعة">تلوين الكل</button>
+        </div>
+      </div>
+      <div id="personNote" class="muted" style="margin-top:6px">—</div>
+      <textarea id="personMsg" rows="8" style="width:100%; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:10px; font-family:inherit; font-size:14px" readonly></textarea>
+    </div>
+
+    <!-- ===== أدوات سريعة (بطاقات مستقلة، نفس الـ IDs القديمة) ===== -->
+<style>
+  /* شبكة مرتّبة للبطاقات، تتكيّف مع الموبايل */
+  #quickTools.qtools-wrap{
+    padding:0; background:transparent; border:0; box-shadow:none;
+  }
+  #qtGrid{
+    display:grid; gap:10px;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+  #qtGrid .card{
+    margin:0; /* نمنع تكرار الهوامش */
+  }
+
+  /* عنوان صغير أنيق داخل كل بطاقة (اختياري) */
+  .qt-title{
+    font-size:14px; font-weight:800; margin:0 0 8px 0;
+  }
+
+  /* صف داخلي مرتب */
+  .qt-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+
+  /* كبس زر صغير للعداد */
+  .qt-pill{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    border:1px solid var(--border); border-radius:12px; padding:8px 12px;
+  }
+
+  /* في الموبايل: عرض كامل تلقائي */
+  @media (max-width:1059px){
+    #qtGrid{ grid-template-columns: 1fr; }
+    .qt-row .btn-ghost, .qt-row button, .qt-row label{ width:100%; }
+    .qt-pill{ width:100%; justify-content:space-between; }
+  }
+</style>
+
+<div id="quickTools" class="qtools-wrap card span2">
+  <div id="qtGrid">
+
+    <!-- بطاقة: الوضع -->
+    <div class="card" id="qtModeCard">
+      <div class="qt-title">الوضع</div>
+      <div class="qt-row">
+        <button id="qtMode" class="btn-ghost">🌙 تفعيل الوضع الداكن</button>
+      </div>
+    </div>
+
+    <!-- بطاقة: إخفاء التحميل -->
+    <div class="card" id="qtHideLoadCard">
+      <div class="qt-title">التحميل</div>
+      <div class="qt-row">
+        <button id="qtHideLoad" class="btn-ghost">🙈 إخفاء قسم التحميل</button>
+      </div>
+    </div>
+
+    <!-- بطاقة: قسم البيانات -->
+    <div class="card" id="qtPersonCard">
+      <div class="qt-title">قسم البيانات</div>
+      <div class="qt-row" style="gap:8px">
+        <button id="qtHidePerson" class="btn-ghost">🙈 إخفاء قسم البيانات</button>
+        <label class="ios-toggle" style="margin-inline-start:6px">
+          <span class="switch-label">تعطيل قسم البيانات</span>
+          <input id="qtDisablePerson" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- بطاقة: العدّاد -->
+    <div class="card" id="qtCounterCard">
+      <div class="qt-title">العدّاد</div>
+      <div class="qt-row">
+        <div class="qt-pill" style="flex:1">
+          <span class="muted">الملوّن:</span><b id="qtColored">—</b>
+          <span style="width:10px"></span>
+          <span class="muted">غير الملوّن:</span><b id="qtUncolored">—</b>
+        </div>
+        <button id="qtRefreshCnt" class="btn-ghost" title="تحديث العدّاد">↻ تحديث</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <script>
+    // عناصر عامة
+    const reloadBtn      = document.getElementById('reloadBtn');
+    const loadNote       = document.getElementById('loadNote');
+
+    const idInput        = document.getElementById('idInput');
+    const pasteSearchBtn = document.getElementById('pasteSearchBtn');
+    const pasteHint      = document.getElementById('pasteHint');
+
+    const resultsBox  = document.getElementById('resultsBox');
+    const statusBadge = document.getElementById('statusBadge');
+    const dupBadge    = document.getElementById('dupBadge');
+    const amountText  = document.getElementById('amountText');
+    const multiText   = document.getElementById('multiText');
+    const extraDupInfo= document.getElementById('extraDupInfo');
+    const justColored = Object.create(null);
+    
+    // عنصر لعرض اسم العميل (من عمود B)
+    const nameText   = document.getElementById('nameText');
+const advCard  = document.getElementById('advCard');
+    const advNote  = document.getElementById('advNote');
+    const sheetSelect   = document.getElementById('sheetSelect');
+    const refreshSheetsBtn = document.getElementById('refreshSheetsBtn');
+    const newSheetName  = document.getElementById('newSheetName');
+    const createSheetBtn= document.getElementById('createSheetBtn');
+    const adminColor    = document.getElementById('adminColor');
+    const withdrawColor = document.getElementById('withdrawColor');
+    const targetModeSel = document.getElementById('targetMode');
+    const advRunBtn     = document.getElementById('advRunBtn');
+
+    const discountInput = document.getElementById('discountInput');
+    const applyDiscountToMessage = document.getElementById('applyDiscountToMessage');
+    const enableSalaryCorrection = document.getElementById('enableSalaryCorrection');
+
+    // بطاقة الشخص
+    const personCardEl = document.getElementById('personCard');
+    const personNote   = document.getElementById('personNote');
+    const personMsg    = document.getElementById('personMsg');
+    const copyMsgBtn   = document.getElementById('copyMsgBtn');
+    const colorAllBtn  = document.getElementById('colorAllBtn');
+
+    // آخر ID
+    const lastIdPill = document.getElementById('lastIdPill');
+    const lastIdText = document.getElementById('lastIdText');
+
+    // أدوات سريعة
+    const qtColored = document.getElementById('qtColored');
+    const qtUncolored = document.getElementById('qtUncolored');
+    const qtMode = document.getElementById('qtMode');
+    const qtHide = document.getElementById('qtHideLoad');
+
+    const qtHidePerson = document.getElementById('qtHidePerson');
+    const qtDisablePerson = document.getElementById('qtDisablePerson');
+
+    // حالة
+    let localMap = null;
+    let lastResult = null;
+    let lastProfileIds = [];
+    let lastBaseId = '';
+
+    const fmt = n => {
+      const x = Number(n);
+      return isNaN(x) ? '—' : new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(x);
+    };
+
+    /******** قسم البيانات (إخفاء/تعطيل) ********/
+    function isPersonFeatureDisabled(){ return localStorage.getItem('disable_person_feature') === '1'; }
+    function isPersonHidden(){ return localStorage.getItem('hide_person_section') === '1'; }
+
+    function applyPersonVisibility(){
+      qtDisablePerson.checked = isPersonFeatureDisabled();
+      const hidden = isPersonHidden() || isPersonFeatureDisabled();
+      personCardEl.style.display = hidden ? 'none' : '';
+      if (isPersonFeatureDisabled()){
+        personMsg.value = '';
+        personNote.textContent = '—';
+        copyMsgBtn.disabled = true;
+        colorAllBtn.disabled = true;
+      } else {
+        copyMsgBtn.disabled = false;
+        colorAllBtn.disabled = false;
+      }
+      qtHidePerson.textContent = hidden ? '👀 إظهار قسم البيانات' : '🙈 إخفاء قسم البيانات';
+    }
+    qtHidePerson.addEventListener('click', ()=>{
+      const cur = isPersonHidden();
+      localStorage.setItem('hide_person_section', cur ? '0':'1');
+      applyPersonVisibility();
+    });
+    qtDisablePerson.addEventListener('change', ()=>{
+      const en = !!qtDisablePerson.checked;
+      localStorage.setItem('disable_person_feature', en ? '1':'0');
+      applyPersonVisibility();
+    });
+
+    /******** أدوات مساعدة UI ********/
+    function flash(el, cls){
+      el.classList.remove('flash-blue','flash-green');
+      void el.offsetWidth;
+      el.classList.add(cls);
+    }
+    function saveLastId(id){
+      try { localStorage.setItem('last_id', id); } catch(_){}
+      lastIdText.textContent = id || '';
+      lastIdPill.style.display = id ? 'inline-flex' : 'none';
+    }
+    function loadLastId(){
+      let v = '';
+      try { v = localStorage.getItem('last_id') || ''; } catch(_){}
+      if (v){ lastIdText.textContent = v; lastIdPill.style.display = 'inline-flex'; }
+      else { lastIdPill.style.display = 'none'; }
+    }
+    lastIdPill.addEventListener('click', ()=>{
+      const v = lastIdText.textContent || '';
+      if (!v) return;
+      idInput.value = v;
+      doSearch();
+    });
+
+    /******** تحميل الأوراق ********/
+    function fillSheets(){
+      google.script.run
+        .withSuccessHandler(arr=>{
+          sheetSelect.innerHTML = '';
+          (arr||[]).forEach(n=>{
+            const o = document.createElement('option');
+            o.value = o.textContent = n;
+            sheetSelect.appendChild(o);
+          });
+        })
+        .withFailureHandler(err=> advNote.textContent = 'خطأ: '+(err?.message||'')) 
+        .getAdminSheets();
+    }
+
+    /******** تحميل البيانات ********/
+    function setLoadBtnState(ok){
+      if (ok===true){ reloadBtn.classList.remove('btn-red'); reloadBtn.classList.add('btn-green'); }
+      else if (ok===false){ reloadBtn.classList.remove('btn-green'); reloadBtn.classList.add('btn-red'); }
+    }
+    function loadData(){
+      setLoadBtnState(false);
+      loadNote.textContent = '⏳ جارٍ تحميل البيانات…';
+      google.script.run
+        .withSuccessHandler(srv=>{
+          const baseMsg = srv?.message || 'تم التحميل من السيرفر.';
+          google.script.run
+            .withSuccessHandler(res=>{
+              if(!res || !res.ok){
+                loadNote.textContent = baseMsg + ' | ⚠️ فشل المحلي: ' + (res?.message||'');
+                setLoadBtnState(false);
+                return;
+              }
+              localMap = res.map || null;
+              const st = res.stats || {};
+              loadNote.textContent = `${baseMsg} | محلي: ${st.agentRows||0} صف / ${st.agentUnique||0} ID.`;
+              setLoadBtnState(true);
+              refreshCountsLive();
+            })
+            .withFailureHandler(err=>{
+              loadNote.textContent = baseMsg + ' | ⚠️ خطأ بالمحلي: ' + (err?.message||'');
+              setLoadBtnState(false);
+            })
+            .getSearchSnapshotLight();
+        })
+        .withFailureHandler(err=>{
+          loadNote.textContent = '⚠️ خطأ بالتحميل: ' + (err?.message||'');
+          setLoadBtnState(false);
+        })
+        .loadDataIntoCache();
+    }
+    reloadBtn.addEventListener('click', loadData);
+    createSheetBtn.addEventListener('click', ()=>{
+  const name = (newSheetName.value || '').trim();
+  if (!name){ advNote.textContent = '⚠️ اكتب اسم ورقة جديدة'; return; }
+  google.script.run
+    .withSuccessHandler(msg=>{
+      advNote.textContent = msg || 'تم الإنشاء ✅';
+      // حدّث القائمة وحدّد الورقة الجديدة
+      google.script.run
+        .withSuccessHandler(arr=>{
+          sheetSelect.innerHTML = '';
+          (arr||[]).forEach(n=>{
+            const o = document.createElement('option');
+            o.value = o.textContent = n;
+            sheetSelect.appendChild(o);
+          });
+          // حاول اختيار الورقة التي أنشأناها
+          const opt = Array.from(sheetSelect.options).find(o => o.value === name);
+          if (opt) sheetSelect.value = name;
+          newSheetName.value = '';
+        })
+        .getAdminSheets();
+    })
+    .withFailureHandler(err=>{
+      advNote.textContent = 'خطأ: ' + (err?.message || '');
+    })
+    .createAdminSheet(name);
+});
+
+    /******** لصق ثم بحث / إنتر ********/
+    pasteSearchBtn.addEventListener('click', async ()=>{
+      pasteHint.textContent = '';
+      try{
+        const txt = await navigator.clipboard.readText();
+        if (txt && txt.trim()){
+          idInput.value = txt.trim();
+          doSearch();
+          return;
+        }
+      }catch(_){}
+      idInput.focus(); idInput.select();
+      pasteHint.textContent = 'الصق يدويًا وسيبدأ البحث تلقائيًا…';
+      const once = ()=>{ pasteHint.textContent = ''; idInput.removeEventListener('input', once); setTimeout(doSearch, 0); };
+      idInput.addEventListener('input', once, { once:true });
+    });
+    idInput.addEventListener('paste', ()=> setTimeout(doSearch, 0));
+    idInput.addEventListener('keyup', e=>{ if (e.key === 'Enter') doSearch(); });
+
+    /******** رندر النتائج ********/
+    function clearDupUI(){
+      dupBadge.style.display = 'none';
+      dupBadge.textContent = 'مكرر';
+      extraDupInfo.textContent = '';
+    }
+    function renderLoading(){
+      clearDupUI();
+      statusBadge.className = 'badge badge--loading';
+      statusBadge.textContent = 'جارٍ البحث…';
+      amountText.textContent = '⏳';
+      multiText.textContent = '';
+      if (nameText) nameText.textContent = '—';
+    }
+    function applyBadges(baseStatus, duplicateLabel, hasSalaries){
+      let baseClass = 'badge--agent';
+      if (baseStatus.includes('ادارة') && !hasSalaries) baseClass = 'badge--admin';
+      else if (baseStatus.includes('سحب وكالة'))      baseClass = 'badge--withdraw';
+      else if (baseStatus.includes('غير موجود'))      baseClass = 'badge--missing';
+      statusBadge.className = 'badge ' + baseClass;
+      statusBadge.textContent = baseStatus || '—';
+      if (duplicateLabel){ dupBadge.style.display='inline-block'; dupBadge.textContent=duplicateLabel; }
+      else dupBadge.style.display='none';
+    }
+    function renderResult(res){
+      lastResult = res;
+      
+      // حدّد اسم الشخص إن وجد فى النتيجة (إما خاصية name أو دمج مصفوفة names)
+      (function(){ 
+        try{
+          let nm = '';
+          if (res) {
+            if (res.name) nm = String(res.name||'').trim();
+            else if (Array.isArray(res.names)) nm = res.names.map(x=>String(x||'').trim()).filter(Boolean).join('، ');
+          }
+          if (nameText) nameText.textContent = nm || '—';
+        }catch(_){ if (nameText) nameText.textContent = '—'; }
+      })();
+if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.textContent='—'; multiText.textContent=res.message||''; return; }
+      if (res.status === 'غير موجود'){ applyBadges('غير موجود', null, false); amountText.textContent='—'; multiText.textContent=''; return; }
+
+      const baseStatus = res.status || '';
+      const dupLabel   = (res.isDuplicate && res.duplicateLabel) ? res.duplicateLabel : null;
+
+      const hasSalaries = Array.isArray(res.salaries) && res.salaries.length > 0;
+      const isAdminOnly = baseStatus.includes('ادارة') && !hasSalaries;
+
+      applyBadges(baseStatus, dupLabel, hasSalaries);
+
+      if (isAdminOnly){ amountText.textContent='—'; multiText.textContent=''; flash(resultsBox,'flash-blue'); return; }
+
+      const total = Number(res.totalSalary)||0;
+      const pct   = Math.max(0, Math.min(100, Number(discountInput.value)||0));
+      amountText.textContent = fmt(total * (1 - pct/100));
+
+      if (hasSalaries && res.salaries.length > 1){
+        multiText.textContent = '(' + res.salaries.map(n=>fmt(Number(n)||0)).join(' + ') + ')';
+      } else multiText.textContent = '';
+
+      flash(resultsBox,'flash-blue');
+    }
+
+    /******** الرسالة ********/
+    function buildMessageText(card, applyDiscount, localMapRef){
+      if (!card || !Array.isArray(card.ids)) return '—';
+      const pct = Math.max(0, Math.min(100, Number(discountInput.value)||0));
+      const lm  = localMapRef || {};
+      const header = [];
+      if (card.name)    header.push(card.name);
+      if (card.phone)   header.push(card.phone);
+      if (card.address) header.push(card.address);
+      if (card.agency)  header.push(card.agency);
+      if (card.note)    header.push('ملاحظة : ' + card.note);
+
+      let total = 0;
+      const idLines = [];
+      card.ids.forEach(x=>{
+        const id = String(x.id||'').trim();
+        if (!id) return;
+        const node = lm[id];
+        const adminOnly = node ? (!node.rowsCount && node.inAdmin) : false;
+        let val = Number(x.amount||0);
+        if (applyDiscount) val = val * (pct ? (1 - pct/100) : 1);
+        total += val;
+        idLines.push({ id, text: `${id} ... ${fmt(val)}${adminOnly ? ' ادارة' : ''}`, value: val });
+      });
+
+      const lines = [];
+      lines.push(header.join('\n')); lines.push('');
+      if (idLines.length === 1){
+        lines.push(idLines[0].id); lines.push(''); lines.push(fmt(idLines[0].value));
+      } else if (idLines.length > 1){
+        lines.push(idLines.map(x=>x.text).join('\n'));
+        lines.push('•••••••••••••••••••••••');
+        lines.push('المجموع : ' + fmt(total));
+        lines.push('•••••••••••••••••••••••');
+      }
+      return lines.filter(Boolean).join('\n');
+    }
+
+    function renderPersonCard(id){
+      if (isPersonFeatureDisabled()) { personNote.textContent='—'; personMsg.value=''; return; }
+      personNote.textContent = 'جاري جلب الرسالة...';
+      personMsg.value = '';
+      lastProfileIds = [];
+      google.script.run
+        .withSuccessHandler(card=>{
+          if(!card || !card.ok){
+            personNote.textContent = card?.message || 'لم يتم العثور على بيانات.';
+            personMsg.value = '';
+            return;
+          }
+          lastProfileIds = (card.ids||[]).map(x=> String(x.id));
+          const txt = buildMessageText(card, applyDiscountToMessage.checked, localMap);
+          personMsg.value = txt;
+          personNote.textContent = `تم — عدد IDs: ${lastProfileIds.length}`;
+          flash(personCardEl, 'flash-blue');
+
+          clearDupUI();
+          const dupList = [];
+          lastProfileIds.forEach(uid=>{
+            const node = localMap && localMap[uid];
+            if (!node) return;
+            if (node.aCol && node.dCol) dupList.push(`${uid} (مكرر)`);
+            else if (node.aCol)         dupList.push(`${uid} (مكرر وكالة فقط)`);
+            else if (node.dCol)         dupList.push(`${uid} (مكرر ادارة فقط)`);
+          });
+          if (dupList.length){
+            dupBadge.style.display='inline-block';
+            dupBadge.textContent='مكرر';
+            extraDupInfo.textContent = 'IDs مكررة: ' + dupList.join('، ');
+          }
+        })
+        .withFailureHandler(err=>{
+          personNote.textContent = 'خطأ: ' + (err?.message||'');
+          personMsg.value = '';
+        })
+        .getPersonCardById(id);
+    }
+
+    function rebuildPersonCardUsingLast(){
+      if (isPersonFeatureDisabled()) return;
+      if (lastBaseId){
+        google.script.run
+          .withSuccessHandler(card=>{
+            if(card && card.ok){
+              personMsg.value = buildMessageText(card, !!applyDiscountToMessage.checked, localMap);
+              personNote.textContent = `تم — عدد IDs: ${(card.ids||[]).length}`;
+            }
+          })
+          .getPersonCardById(lastBaseId);
+      }
+    }
+
+    copyMsgBtn.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(personMsg.value||'');
+        copyMsgBtn.textContent = '✓ نُسخت';
+        setTimeout(()=> copyMsgBtn.textContent='نسخ الرسالة', 900);
+      }catch(_){
+        personMsg.select(); document.execCommand('copy');
+      }
+    });
+
+    colorAllBtn.addEventListener('click', ()=>{
+      if (isPersonFeatureDisabled()) { personNote.textContent='الميزة معطّلة.'; return; }
+      if (!lastProfileIds.length){ personNote.textContent='لا IDs لتلوينها.'; return; }
+      const sheet = sheetSelect.value;
+      const targetMode = targetModeSel.value;
+      if (targetMode==='both' && !sheet){ advNote.textContent='اختر ورقة الهدف أولاً.'; return; }
+
+      personNote.textContent = 'جارٍ التلوين...';
+      let done=0, fail=0;
+      const runOne = (uid)=> new Promise((resolve)=>{
+        google.script.run
+          .withSuccessHandler(_=>{ done++; resolve(true); })
+          .withFailureHandler(_=>{ fail++; resolve(false); })
+          .applyAdvancedAction(uid, sheet, adminColor.value, withdrawColor.value, targetMode);
+      });
+      Promise.all(lastProfileIds.map(runOne)).then(()=>{
+        personNote.textContent = `تم — ملوّن: ${done}, فشل: ${fail}`;
+        flash(personCardEl,'flash-green');
+        if(localMap){
+          lastProfileIds.forEach(uid=>{
+            if(!localMap[uid]) return;
+            localMap[uid].aCol = true;
+            if (targetMode==='both') localMap[uid].dCol = true;
+          });
+        }
+        refreshCountsLive();
+      });
+    });
+
+    /******** تنفيذ ذكي ********/
+    function runAdvanced() {
+      advNote.textContent = '... جارٍ التنفيذ';
+      const id = idInput.value.trim();
+      if (!id) { advNote.textContent = '⚠️ أدخل ID أولاً'; return; }
+
+      const sheet = sheetSelect.value;
+      const targetMode = targetModeSel.value;
+      if (targetMode === 'both' && !sheet) {
+        advNote.textContent = '⚠️ اختر ورقة الهدف';
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(res => {
+          advNote.textContent = res?.message || 'تم ✅';
+          flash(advCard, 'flash-green');
+          if (localMap && localMap[id]) {
+            localMap[id].aCol = true;
+            if (targetMode === 'both') localMap[id].dCol = true;
+          }
+          if (lastResult) renderResult(lastResult);
+          refreshCountsLive();
+        })
+        .withFailureHandler(err => {
+          advNote.textContent = 'خطأ: ' + (err?.message || '');
+        })
+        .applyAdvancedAction(id, sheet, adminColor.value, withdrawColor.value, targetMode);
+    }
+    advRunBtn.addEventListener('click', runAdvanced);
+
+    /******** عداد / وضع داكن / إخفاء تحميل ********/
+    function fmtNum(n){ const x=Number(n); return isNaN(x)?'—':new Intl.NumberFormat('en-US').format(x); }
+    function refreshCountsLive(pctOverride){
+      const pct = (typeof pctOverride === 'number') ? pctOverride : Number(discountInput?.value || 0);
+      google.script.run
+        .withSuccessHandler(res=>{
+          if(!res || !res.ok){ qtColored.textContent='—'; qtUncolored.textContent='—'; return; }
+          qtColored.textContent   = fmtNum(res.coloredRows || 0);
+          qtUncolored.textContent = fmtNum(res.uncoloredRows || 0);
+        })
+        .withFailureHandler(()=>{ qtColored.textContent='—'; qtUncolored.textContent='—'; })
+        .getLiveStatsForFooter(pct);
+    }
+    function applyModeLabel(){
+      const isDark = document.body.classList.contains('dark');
+      qtMode.textContent = isDark ? '☀️ وضع فاتح' : '🌙 وضع داكن';
+    }
+    try { if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark'); } catch(_){}
+    applyModeLabel();
+    qtMode.addEventListener('click', ()=>{
+      const isDark = document.body.classList.toggle('dark');
+      applyModeLabel();
+      try { localStorage.setItem('darkMode', isDark ? 'true':'false'); } catch(_){}
+    });
+    function applyHideState(){
+      const loadCard = document.getElementById('loadCard');
+      const hide = (localStorage.getItem('hide_loadsec') === '1');
+      if (loadCard) loadCard.style.display = hide ? 'none' : '';
+      qtHide.textContent = hide ? '👀 إظهار التحميل' : '🙈 إخفاء التحميل';
+    }
+    applyHideState();
+    qtHide.addEventListener('click', ()=>{
+      const cur = localStorage.getItem('hide_loadsec') === '1';
+      localStorage.setItem('hide_loadsec', cur ? '0':'1');
+      applyHideState();
+    });
+    document.getElementById('qtRefreshCnt').addEventListener('click', refreshCountsLive);
+
+    /******** البحث (محلي أولاً ثم السيرفر) ********/
+    let querySeq = 0;
+    function normalizeId(v){ return String(v||'').trim(); }
+
+    function buildLocalResult(id){
+      if (!localMap || (!localMap[id] && !Object.prototype.hasOwnProperty.call(localMap, id))) {
+        // لو غير موجود بالوكيل، يمكن يكون "ادارة فقط" — نترك للسيرفر الحكم
+        return { status:'غير موجود', totalSalary:'0.00', salaries:[], id:id, isDuplicate:false };
+      }
+      const node = localMap[id] || {};
+      const inAdmin = !!node.inAdmin;
+      const rowsCount = Number(node.rowsCount||0);
+      const total = Number(node.sum||0);
+      const salaries = Array.isArray(node.salaries) ? node.salaries.map(Number) : [];
+
+      let status = 'غير موجود';
+      if (rowsCount > 0) {
+        status = inAdmin ? ((rowsCount>1)? 'سحب وكالة - راتبين':'سحب وكالة') : ((rowsCount>1)? 'راتبين':'وكالة');
+      } else if (inAdmin) {
+        status = 'ادارة';
+      }
+
+      // مكرر؟
+      let isDuplicate=false, duplicateLabel=null;
+      const aCol = !!node.aCol;
+      const dCol = !!node.dCol;
+      if (aCol && dCol) { isDuplicate = true; duplicateLabel = 'مكرر'; }
+      else if (aCol)    { isDuplicate = true; duplicateLabel = 'مكرر وكالة فقط'; }
+      else if (dCol)    { isDuplicate = true; duplicateLabel = 'مكرر ادارة فقط'; }
+
+      return {
+        status: status,
+        totalSalary: total.toFixed(2),
+        salaries: salaries,
+        discountAmount: '0.00',
+        salaryAfterDiscount: total.toFixed(2),
+        id: id,
+        isDuplicate: isDuplicate,
+        duplicateLabel: duplicateLabel
+      };
+    }
+
+    function doSearch(){
+  const id = String(idInput.value||'').trim();
+  if (!id){
+    applyBadges('غير موجود', null, false);
+    amountText.textContent = '—';
+    multiText.textContent  = '';
+    personNote.textContent = '—';
+    personMsg.value = '';
+    clearDupUI();
+    return;
+  }
+
+  saveLastId(id);
+  lastBaseId = id;
+  renderLoading(); // أبقِ "جارٍ البحث…" كافتراضي
+
+  const hasLocal = !!(localMap && Object.prototype.hasOwnProperty.call(localMap, id));
+  if (hasLocal){
+    // إذا موجود بالوكيل: أعرض محليًا فورًا (وكالة/سحب وكالة/راتبين)
+    const node = localMap[id];
+    const inAdmin   = !!node.inAdmin;
+    const rowsCount = Number(node.rowsCount||0);
+    const total     = Number(node.sum||0);
+    const salaries  = Array.isArray(node.salaries) ? node.salaries.map(Number) : [];
+    let status;
+    if (rowsCount > 0) status = inAdmin ? ((rowsCount>1)? 'سحب وكالة - راتبين':'سحب وكالة')
+                                        : ((rowsCount>1)? 'راتبين':'وكالة');
+    else status = 'غير موجود';
+
+    let isDuplicate=false, duplicateLabel=null;
+    if (node.aCol && node.dCol) { isDuplicate = true; duplicateLabel = 'مكرر'; }
+    else if (node.aCol)         { isDuplicate = true; duplicateLabel = 'مكرر وكالة فقط'; }
+    else if (node.dCol)         { isDuplicate = true; duplicateLabel = 'مكرر ادارة فقط'; }
+
+    renderResult({
+      status,
+      totalSalary: total.toFixed(2),
+      salaries,
+      names: (Array.isArray(node.names) ? node.names : []),
+      name: (Array.isArray(node.names) && node.names.length ? String(node.names[0]||'').trim() : ''),
+      discountAmount: '0.00',
+      salaryAfterDiscount: total.toFixed(2),
+      id,
+      isDuplicate,
+      duplicateLabel
+    });
+  }
+  // إذا غير موجود محليًا (قد يكون "إدارة فقط"): لا نعرض "غير موجود" — ننتظر رد السيرفر.
+
+  const mySeq = (++window.__qseq || (window.__qseq=1));
+  const pct = Number(discountInput?.value || 0);
+
+  google.script.run
+    .withSuccessHandler(res=>{
+      if (mySeq !== window.__qseq) return; // تجاهل الردود المتأخرة
+      if (!res || res.status === 'error'){
+        if (res && res.message) renderResult({ status:'error', message: res.message });
+        return;
+      }
+      renderResult(res);
+      renderPersonCard(id);
+    })
+    .withFailureHandler(err=>{
+      if (err && err.message) renderResult({ status:'error', message: err.message });
+    })
+    .searchId(id, pct);
+}
+
+    // تحديث الخصم دون اتصالات
+    (function(){
+      if (!discountInput) return;
+      let t;
+      discountInput.addEventListener('input', ()=>{
+        if (t) clearTimeout(t);
+        t = setTimeout(()=>{
+          if (lastResult) renderResult(lastResult);
+          const pct = Math.max(0, Math.min(100, Number(discountInput.value)||0));
+          refreshCountsLive(pct);
+          if (applyDiscountToMessage?.checked && lastBaseId) rebuildPersonCardUsingLast();
+        }, 120);
+      });
+    })();
+
+    // مهيّئ سويتش "تصحيح الراتب"
+    function initSalaryCorrectionSwitch(){
+      if (!enableSalaryCorrection) return;
+      google.script.run
+        .withSuccessHandler(res=>{
+          try { enableSalaryCorrection.checked = !!(res && res.enabled); } catch(_){}
+        })
+        .withFailureHandler(()=>{})
+        .getSalaryCorrectionEnabled();
+
+      enableSalaryCorrection.addEventListener('change', ()=>{
+        const desired = !!enableSalaryCorrection.checked;
+        google.script.run
+          .withSuccessHandler(res=>{
+            if (!res || typeof res.enabled === 'undefined') return;
+            if (!!res.enabled !== desired) enableSalaryCorrection.checked = !!res.enabled;
+            if (lastBaseId) rebuildPersonCardUsingLast();
+          })
+          .withFailureHandler(()=>{ enableSalaryCorrection.checked = !desired; })
+          .setSalaryCorrectionEnabled(desired ? 1 : 0);
+      });
+    }
+
+    // أول تحميل
+    window.addEventListener('load', ()=>{
+      applyPersonVisibility();
+      loadLastId();
+      loadData();
+      fillSheets();
+      initSalaryCorrectionSwitch();
+      setTimeout(refreshCountsLive, 600);
+    });
+  </script>
+  <style>
+@media (max-width: 1059px){
+  #quickTools{
+    grid-column: 1 / -1;
+    grid-row: 999;
+    margin-top: 12px;
+  }
+}
+</style>
+<script>
+(function(){
+  function placeQT(){
+    var qt = document.getElementById('quickTools');
+    var cont = document.querySelector('.container');
+    if(!qt || !cont) return;
+    var w = Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+    if (w <= 1059) cont.appendChild(qt);
+  }
+  window.addEventListener('load', placeQT);
+  window.addEventListener('resize', function(){
+    clearTimeout(window.__qt_fix);
+    window.__qt_fix = setTimeout(placeQT, 150);
+  });
+})();
+</script>
+<style>
+/* تحسين تنسيق قسم التنفيذ على الشاشات الصغيرة */
+@media (max-width: 640px){
+  /* خلي صفوف القسم قابلة للّف */
+  #advCard .row{ flex-wrap: wrap !important; }
+
+  /* صف (الهدف + التنفيذ + تحديث) */
+  #advCard .row:first-of-type label.small{
+    width: 100% !important;
+    min-width: 0 !important;
+    display: block;
+    margin: 0 0 6px 0 !important;
+    font-size: 12px;
+    opacity: .9;
+  }
+  #advCard #sheetSelect,
+  #advCard #targetMode{
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 40px;
+  }
+  #advCard #refreshSheetsBtn{
+    order: 3;                /* نزّله تحت الحقول */
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  /* صف الألوان (لون الإدارة / سحب وكالة) */
+  #advCard .row[style*="flex-wrap:wrap"] > div{
+    flex: 1 1 100% !important;
+  }
+  #advCard input[type="color"]{
+    width: 40px !important;
+    height: 34px !important;
+  }
+
+  /* صف إنشاء ورقة جديدة */
+  #advCard #newSheetName{
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+  #advCard #createSheetBtn{
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    margin-top: 6px;
+  }
+
+  /* صف الخصم + السويتشات */
+  #advCard input[type="number"]{
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    height: 40px;
+  }
+  #advCard .toggle-chip{
+    flex: 1 1 48% !important;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  /* زر التنفيذ: مهو كامل أصلاً، نزود راحة على الموبايل */
+  #advCard #advRunBtn{
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  /* ملاحظات التنفيذ يظهر واضح وتحت الزر */
+  #advCard #advNote{ font-size: 12px; line-height: 1.4; }
+}
+</style>
+
+<script>
+/* ترتيب بسيط: ضمن الموبايل، حط زر التحديث بعد القائمتين دائماً */
+(function(){
+  function fixAdvLayout(){
+    var w = Math.min(window.innerWidth, document.documentElement.clientWidth||window.innerWidth);
+    if (w > 640) return;
+    var row = document.querySelector('#advCard .row');
+    var btn = document.getElementById('refreshSheetsBtn');
+    if(row && btn) row.appendChild(btn);
+  }
+  window.addEventListener('load', fixAdvLayout);
+  window.addEventListener('resize', function(){ clearTimeout(window.__advFix); window.__advFix=setTimeout(fixAdvLayout,150); });
+})();
+</script>
+<!-- ===== /Bulk IDs — Advanced ===== -->
+<!-- شارة حالة الإنترنت (فحص ذكي، لا يمنع التنفيذ عند البطء) -->
+<style>
+  #netBadge{position:fixed;inset-inline-end:12px;inset-block-end:12px;z-index:9999;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.15);background:#e5fbe5;border:1px solid #c6f6c6;color:#0b1020;display:flex;align-items:center;gap:6px}
+  #netBadge.net-weak{background:#fff8e5;border-color:#ffe7a8;color:#6b4e00}
+  #netBadge.net-down{background:#ffe5e5;border-color:#ffc2c2;color:#6b0000}
+  #netBadge .dot{width:8px;height:8px;border-radius:50%;background:#16a34a}
+  #netBadge.net-weak .dot{background:#f59e0b}
+  #netBadge.net-down .dot{background:#ef4444}
+</style>
+<div id="netBadge"><span class="dot"></span><span id="netText">فحص الاتصال…</span></div>
+
+<script>
+(function(){
+  const badge=document.getElementById('netBadge');
+  const text=document.getElementById('netText');
+
+  function setState(kind,label){
+    badge.classList.remove('net-weak','net-down');
+    if(kind==='ok'){ text.textContent=`متصل ✅ ${label||''}`.trim(); }
+    else if(kind==='weak'){ badge.classList.add('net-weak'); text.textContent=`بطيء 🟡 ${label||''}`.trim(); }
+    else { badge.classList.add('net-down'); text.textContent=`أوفلاين ⛔ ${label||''}`.trim(); }
+  }
+
+  function pingServer(timeoutMs){
+    return new Promise(res=>{
+      let done=false, t0=performance.now();
+      try{
+        google.script.run
+          .withSuccessHandler(()=>{ if(done) return; done=true; res({ok:true,rtt:performance.now()-t0}); })
+          .withFailureHandler(()=>{ if(done) return; done=true; res({ok:false}); })
+          .ping?.();
+        setTimeout(()=>{ if(done) return; done=true; res({ok:false}); }, timeoutMs||2000);
+      }catch(_){ res({ok:false}); }
+    });
+  }
+
+  let lastPing=0;
+  async function checkNow(){
+    // فحص الجهاز كل ثانية (سنفعّله بالinterval بالأسفل)
+    if(!navigator.onLine){ setState('down','(الجهاز غير متصل)'); window.__serverReachable=false; return; }
+
+    // فحص السيرفر كل 30 ثانية فقط
+    const now=Date.now();
+    if(now-lastPing>30000){
+      lastPing=now;
+      const s=await pingServer(1500);
+      if(s.ok){
+        const rtt=Math.round(s.rtt||0);
+        if(rtt<=700) setState('ok',`(${rtt}ms)`); else setState('weak',`(${rtt}ms)`);
+        window.__serverReachable=true;   // نستفيد منها للعرض فقط
+      }else{
+        setState('weak','()'); // عرض فقط؛ ما يمنع التنفيذ
+        window.__serverReachable=false;
+      }
+    }
+  }
+
+  // فحص الجهاز كل ثانية + السيرفر كل 30 ثانية
+  setInterval(checkNow,1000);
+  checkNow();
+  window.addEventListener('online',()=>{ lastPing=0; checkNow(); });
+  window.addEventListener('offline',()=> setState('down','(الجهاز غير متصل)'));
+
+  // 🔁 أهم تغيير: السماح بالتنفيذ ما دام الجهاز Online حتى لو السيرفر بطيء
+  window.netEnsureOnline = async function(){
+    // لو الجهاز أوفلاين فقط نمنع
+    if(!navigator.onLine){
+      alert('⛔ الجهاز غير متصل بالإنترنت');
+      return false;
+    }
+    // خلاف ذلك نسمح دومًا (سريع أو بطيء / السيرفر يتأخر بالرد)
+    return true;
+  };
+})();
+</script>
+<script>
+/* حارس زر التنفيذ — يمنع التنفيذ لو الاتصال غير جاهز (بدون لمس كودك الأصلي) */
+(function guardExecButton(){
+  const SELECTORS = ['#advRunBtn']; // أضف أزرار أخرى هنا لو تحب
+
+  function isServerLikelyUp(){
+    if (window.__serverReachable === true)  return true;
+    if (window.__serverReachable === false) return false;
+    return navigator.onLine; // تقدير سريع
+  }
+
+  async function ensureOnlineInteractive(){
+    if (typeof window.netEnsureOnline === 'function'){
+      return await window.netEnsureOnline();
+    }
+    if (!navigator.onLine){ alert('⛔ الجهاز أوفلاين — لن يتم التنفيذ.'); return false; }
+    if (window.__serverReachable === false){ alert('🟡 السيرفر غير متاح — أعد المحاولة أو حدّث الصفحة.'); return false; }
+    return true;
+    }
+
+  function handlerCapture(e){
+    const btn = e.target.closest(SELECTORS.join(','));
+    if (!btn) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    (async ()=>{
+      if (!isServerLikelyUp()){
+        const ok = await ensureOnlineInteractive();
+        if (!ok) return;
+      } else {
+        const ok = await ensureOnlineInteractive();
+        if (!ok) return;
+      }
+      // مرّت الشروط ✅ — أعد إطلاق النقر ليكمل كودك الأصلي
+      document.removeEventListener('click', handlerCapture, true);
+      try { btn.click(); } finally {
+        setTimeout(()=> document.addEventListener('click', handlerCapture, true), 0);
+      }
+    })();
+  }
+
+  document.addEventListener('click', handlerCapture, true);
+})();
+</script>
+<!-- ======= سجل النقل — واجهة نهائية ======= -->
+<style>
+  .lgp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 14px;border:1px solid #16a34a;background:#22c55e;color:#fff;
+    font-weight:800;cursor:pointer;width:100%;margin:10px 0;border-radius:12px}
+  .lgp-btn:disabled{opacity:.6;cursor:not-allowed}
+
+  .lgp-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.35);z-index:99999}
+  .lgp-modal.show{display:flex}
+  .lgp-sheet{width:min(92vw,560px);padding:14px;background:var(--card-bg,#111827);color:var(--fg,#e5e7eb);
+    box-shadow:0 12px 28px rgba(0,0,0,.25);border:1px solid var(--border,#374151);border-radius:12px;overflow:hidden}
+  .lgp-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .lgp-title h3{margin:0;font-size:16px;font-weight:800}
+  .lgp-ghost{border:1px solid var(--border,#374151);background:transparent;padding:8px 12px;color:inherit;border-radius:12px}
+
+  .lgp-list{max-height:56vh;overflow:auto;border:1px solid var(--border,#374151);background:rgba(255,255,255,.02);border-radius:12px}
+  .lgp-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px;border-bottom:1px solid var(--border,#374151)}
+  .lgp-row:last-child{border-bottom:0}
+  .lgp-id{font-family:ui-monospace,monospace;font-weight:800}
+  .lgp-meta{font-size:11px;opacity:.8}
+
+  .lgp-controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .lgp-select,.lgp-color{border:1px solid var(--border,#374151);background:transparent;color:inherit;padding:10px;border-radius:12px}
+  .lgp-primary{background:#22c55e;border:1px solid #16a34a;color:#fff;padding:12px;font-weight:800;border-radius:12px}
+
+  .lgp-toggle{display:inline-flex;align-items:center;gap:10px}
+  .ios-switch{position:relative;width:48px;height:28px}
+  .ios-switch input{appearance:none;-webkit-appearance:none;width:48px;height:28px;margin:0;cursor:pointer}
+  .ios-switch .track{position:absolute;inset:0;background:#6b7280;transition:.2s;border-radius:999px}
+  .ios-switch .thumb{position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+  .ios-switch input:checked ~ .track{ background:#22c55e }
+  .ios-switch input:checked ~ .thumb{ left:23px }
+
+  .lgp-color{ width:44px;height:34px;padding:0 }
+  .lgp-hint{font-size:12px;opacity:.75;margin-top:6px}
+</style>
+
+<!-- زر "السجل" (يُزرَع تلقائيًا تحت زر التنفيذ) -->
+<div id="lgpMount" style="display:none">
+  <button id="lgpOpen" class="lgp-btn">📁 السجل</button>
+</div>
+
+<!-- النافذة المنبثقة -->
+<div id="lgpModal" class="lgp-modal" role="dialog" aria-modal="true">
+  <div class="lgp-sheet">
+    <div class="lgp-title">
+      <h3>📁 سجل النقل (آخر 15)</h3>
+      <button id="lgpClose" class="lgp-ghost">إغلاق</button>
+    </div>
+
+    <div id="lgpList" class="lgp-list">
+      <div class="lgp-row"><div></div><div>… جارٍ التحميل</div><div></div></div>
+    </div>
+
+    <div class="lgp-controls">
+      <select id="lgpTarget" class="lgp-select" title="اختر ورقة الهدف">
+        <option>… جارٍ التحميل</option>
+      </select>
+
+      <div class="lgp-toggle">
+        <span style="font-size:12px;opacity:.8">لون مخصّص</span>
+        <label class="ios-switch">
+          <input id="lgpUseCustom" type="checkbox">
+          <span class="track"></span><span class="thumb"></span>
+        </label>
+      </div>
+      <input id="lgpColor" type="color" class="lgp-color" value="#ddd6fe" title="لون بعد النقل" disabled>
+
+      <button id="lgpMove" class="lgp-primary">نقل المحدد</button>
+    </div>
+
+    <div id="lgpHint" class="lgp-hint"></div>
+  </div>
+</div>
+
+<script>
+/* زرع زر السجل تحت زر تنفيذ (حسب النتيجة) */
+(function(){
+  var mount = document.getElementById('lgpMount');
+  function placeButton(){
+    var host=null, runBtn=document.getElementById('advRunBtn');
+    if(runBtn) host=runBtn.closest('.card');
+    if(!host) host=document.getElementById('advCard');
+    if(!host){ var cards=document.querySelectorAll('.card'); if(cards.length) host=cards[cards.length-1]; }
+    if(!host) host=document.body;
+    if(mount.parentNode!==host) host.appendChild(mount);
+    mount.style.display='block';
+  }
+  function ensureMounted(){
+    placeButton();
+    setTimeout(placeButton,150); setTimeout(placeButton,400); setTimeout(placeButton,1000);
+    window.addEventListener('resize',()=>setTimeout(placeButton,150));
+    new MutationObserver(()=>placeButton()).observe(document.body,{childList:true,subtree:true});
+  }
+  (document.readyState==='loading') ? document.addEventListener('DOMContentLoaded',ensureMounted) : ensureMounted();
+})();
+
+/* واجهة السجل */
+(function(){
+  var modal=document.getElementById('lgpModal');
+  var openBtn=document.getElementById('lgpOpen');
+  var closeBtn=document.getElementById('lgpClose');
+  var list=document.getElementById('lgpList');
+  var sel=document.getElementById('lgpTarget');
+  var useCustom=document.getElementById('lgpUseCustom');
+  var colorInp=document.getElementById('lgpColor');
+  var move=document.getElementById('lgpMove');
+  var hint=document.getElementById('lgpHint');
+
+  function setHint(msg){ if(hint) hint.textContent = msg || ''; }
+
+  function renderList(items){
+    list.innerHTML='';
+    if(!items||!items.length){
+      list.innerHTML='<div class="lgp-row"><div></div><div>لا يوجد سجل</div><div></div></div>';
+      list.__rows__=[];
+      return;
+    }
+    items.forEach(function(it,i){
+      var row=document.createElement('div');
+      row.className='lgp-row';
+      row.innerHTML = `
+        <label><input type="checkbox" data-idx="${i}"></label>
+        <div>
+          <div class="lgp-id">${it.id||'—'} | ${it.target||'—'}</div>
+          <div class="lgp-meta">${it.at||''} • صفوف: ${it.rows||1}</div>
+        </div>
+        <div style="width:18px;height:18px;border:1px solid var(--border,#374151);border-radius:6px;background:${it.color||'transparent'}"></div>
+      `;
+      list.appendChild(row);
+    });
+    list.__rows__ = items || [];
+  }
+
+  function loadAll(){
+    list.innerHTML='<div class="lgp-row"><div></div><div>… جارٍ التحميل</div><div></div></div>';
+    sel.innerHTML='<option>… جارٍ التحميل</option>';
+    setHint('تحميل السجل والأوراق…');
+
+    // السجل
+    google.script.run
+      .withSuccessHandler(function(items){ renderList(items||[]); setHint(''); })
+      .withFailureHandler(function(err){
+        list.innerHTML='<div class="lgp-row"><div></div><div>⚠️ خطأ getMoveLogLatest: '+(err&&err.message||'')+'</div><div></div></div>';
+        list.__rows__=[];
+        setHint('');
+      })
+      .getMoveLogLatest(15);
+
+    // أسماء الأوراق (يستخدم getAdminSheetsSafe، وإن فشل يحاول getAdminSheets)
+    google.script.run
+      .withSuccessHandler(function(arr){
+        sel.innerHTML='';
+        (arr||[]).forEach(function(n){
+          var o=document.createElement('option'); o.value=o.textContent=n; sel.appendChild(o);
+        });
+        var sheetSelect=document.getElementById('sheetSelect');
+        if(sheetSelect && sheetSelect.value) sel.value = sheetSelect.value;
+      })
+      .withFailureHandler(function(){
+        google.script.run
+          .withSuccessHandler(function(arr){
+            sel.innerHTML='';
+            (arr||[]).forEach(function(n){
+              var o=document.createElement('option'); o.value=o.textContent=n; sel.appendChild(o);
+            });
+          })
+          .withFailureHandler(function(err){
+            sel.innerHTML=''; var o=document.createElement('option');
+            o.textContent='⚠️ فشل الحصول على أسماء الأوراق: '+(err&&err.message||''); sel.appendChild(o);
+          })
+          .getAdminSheets();
+      })
+      .getAdminSheetsSafe();
+  }
+
+  // فتح/إغلاق
+  openBtn && openBtn.addEventListener('click', ()=>{ loadAll(); modal.classList.add('show'); });
+  closeBtn && closeBtn.addEventListener('click', ()=> modal.classList.remove('show'));
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.remove('show'); });
+
+  // تفعيل/تعطيل لون مخصص
+  function syncColor(){ colorInp.disabled = !useCustom.checked; colorInp.style.opacity = useCustom.checked ? '1' : '.55'; }
+  useCustom && useCustom.addEventListener('change', syncColor); syncColor();
+
+  // نقل المحدد
+  move && move.addEventListener('click', function(){
+    var checks = Array.from(list.querySelectorAll('input[type=checkbox]:checked'));
+    if(!checks.length){ alert('اختر عناصر للنقل'); return; }
+    var rows = list.__rows__ || [];
+    var pick = checks.map(function(ch){ var r=rows[+ch.dataset.idx]||{}; return { id:(r.id||''), from:(r.target||'') }; });
+    var override = useCustom && useCustom.checked ? (colorInp.value||'') : '';
+
+    move.disabled=true; move.textContent='جارٍ النقل…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        move.disabled=false; move.textContent='نقل المحدد';
+        alert(res && res.message ? res.message : 'تم.');
+        loadAll();
+      })
+      .withFailureHandler(function(err){
+        move.disabled=false; move.textContent='نقل المحدد';
+        alert('خطأ: '+(err&&err.message||'')); 
+      })
+      .moveFromLog(pick, sel.value||'', override);
+  });
+})();
+</script>
+<?!= HtmlService.createHtmlOutputFromFile('AIClient').getContent(); ?>
+</script>
+<!-- ✅ ترتيب موحّد + تثبيت الأدوات السريعة + تنسيق صف البحث -->
+<style id="unified_mobile_layout">
+  @media (max-width:1200px){
+    .container{
+      display:grid !important;
+      grid-template-columns:1fr !important;
+      grid-template-areas:
+        "load"
+        "results"
+        "search"
+        "exec"
+        "person"
+        "quick";
+      gap:14px !important;
+    }
+
+    /* اربط المناطق */
+    #loadCard   { grid-area: load    !important; }
+    #resultsBox { grid-area: results !important; }
+    #searchCard { grid-area: search  !important; }
+    #execCard   { grid-area: exec    !important; }
+    #personCard { grid-area: person  !important; }
+    #quickTools { grid-area: quick   !important; }
+
+    /* خفّف الكروت على الموبايل */
+    .card{
+      background:transparent !important;
+      border:0 !important;
+      box-shadow:none !important;
+      border-radius:12px !important;
+      padding:12px !important;
+      margin:0 !important;
+    }
+
+    /* البحث: حقل + زر اللصق جنب بعض */
+    #searchCard .row,
+    #searchCard .row.stretch{
+      display:grid !important;
+      grid-template-columns:1fr auto !important;
+      column-gap:8px !important;
+      align-items:stretch !important;
+      width:100% !important;
+    }
+    #idInput{
+      width:100% !important; 
+      min-height:44px !important; 
+      font-size:16px !important;
+    }
+    #pasteSearchBtn{
+      height:44px !important; 
+      min-width:130px !important; 
+      white-space:nowrap !important; 
+      font-weight:700 !important;
+    }
+  }
+</style>
+
+<script>
+/* ✅ JS داعم: يضمن وضع #quickTools بعد #personCard (إن كان ظاهر) وإلا بعد #execCard + يثبت زر اللصق بجانب الحقل */
+(function(){
+  var IDS = { results:'resultsBox', search:'searchCard', exec:'execCard', person:'personCard', quick:'quickTools' };
+
+  function $(id){ return document.getElementById(id); }
+  function visible(el){
+    if (!el) return false;
+    var cs = getComputedStyle(el);
+    return el.offsetParent !== null && cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0';
+  }
+
+  function placeQuickTools(){
+    var qt = $(IDS.quick), exec = $(IDS.exec), person = $(IDS.person);
+    if (!qt || !exec) return;
+
+    var anchor = (person && visible(person)) ? person : exec;
+    var parent = anchor.parentNode;
+
+    // انقل quickTools لنفس الأب ثم ضعه بعد الـ anchor
+    if (qt.parentNode !== parent) parent.appendChild(qt);
+    if (qt.previousElementSibling !== anchor) parent.insertBefore(qt, anchor.nextSibling);
+
+    // ضبط قياسات لطيفة
+    qt.style.maxWidth = '780px';
+    qt.style.width    = '100%';
+    qt.style.margin   = '12px auto';
+  }
+
+  function fixSearchRow(){
+    var sc = $(IDS.search);
+    if (!sc) return;
+    // تأكد أن زر اللصق أخ للحقل داخل نفس صف .row
+    var input = sc.querySelector('#idInput');
+    var btn   = document.getElementById('pasteSearchBtn');
+    var row   = sc.querySelector('.row') || sc.querySelector('.row.stretch') || sc;
+    if (input && btn && row && btn.parentNode !== row){
+      row.appendChild(btn);
+    }
+    // فرض الشبكة (احتياط لو كسرت قواعد سابقة)
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr auto';
+    row.style.columnGap = '8px';
+    row.style.alignItems = 'stretch';
+  }
+
+  function run(){
+    placeQuickTools();
+    fixSearchRow();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+
+  // راقب أي تغيّر وأعد الترتيب تلقائيًا
+  var obs = new MutationObserver(run);
+  obs.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+  window.addEventListener('resize', run);
+})();
+</script>
+<script>
+(function(){
+  if (typeof renderResult !== 'function') return;
+  const _orig = renderResult;
+
+  renderResult = function(res){
+    // ارسم النتيجة الأصلية أولاً (الراتب/الحالة…)
+    _orig(res);
+
+    // ثم عزّز "مكرر" محليًا فورًا
+    try{
+      const dupBadge = document.getElementById('dupBadge'); // شارة "مكرر" الحالية
+      const id = (res && res.id) ? String(res.id).trim() : '';
+
+      // لو السيرفر لسه ما رجّع "مكرر"، بس نحنا شايفين تنفيذ فوري لهالـID
+      const serverSaysDup = !!(res && (res.isDuplicate || res.dupFlavor));
+      if (id && justColored[id] && !serverSaysDup) {
+        if (dupBadge){
+          dupBadge.style.display = '';
+          dupBadge.textContent = (justColored[id] === 'both') ? 'مكرر' : 'مكرر وكالة فقط';
+        }
+        // (اختياري) امسح العلامة بعد أول إظهار لحتى ما تضل معك
+        // delete justColored[id];
+      } else if (dupBadge && !serverSaysDup) {
+        // ما في لا محلي ولا سيرفر → أخفِ الشارة
+        dupBadge.style.display = 'none';
+      }
+    }catch(_){}
+  };
+
+  // نظافة بصرية: لما تغيّر الـID أو يبدأ بحث جديد امسح الشارة بسرعة
+  try {
+    const idInput = document.getElementById('idInput');
+    if (idInput){
+      idInput.addEventListener('input', ()=>{
+        const dupBadge = document.getElementById('dupBadge');
+        if (dupBadge) dupBadge.style.display = 'none';
+      });
+    }
+    if (typeof renderLoading === 'function'){
+      const _rl = renderLoading;
+      renderLoading = function(){
+        _rl();
+        const dupBadge = document.getElementById('dupBadge');
+        if (dupBadge) dupBadge.style.display = 'none';
+      };
+    }
+  } catch (_){}
+})();
+</script>
+</body>
+</html>
