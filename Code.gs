@@ -41,37 +41,29 @@ function getExternalSheetLinksFromSettings() {
   if (!sh) throw new Error('❌ لم يتم العثور على ورقة Settings.');
 
   const lastRow = sh.getLastRow();
-  if (lastRow < 1) throw new Error('⚠️ لا توجد بيانات في ورقة Settings للروابط الخارجية.');
+  let adminUrl = '';
+  let agentUrl = '';
 
-  const data = sh.getRange(1, 9, lastRow, 4).getDisplayValues(); // I:J:K:L
-
-  const admin = { url: '', sheetName: '' };
-  const agent = { url: '', sheetName: '' };
-
-  for (let i = 0; i < data.length; i++) {
-    const row = data[i];
-    if (!admin.url) {
-      const normalized = normalizeSheetLink_(row[0]);
-      if (normalized) {
-        admin.url = normalized;
-        admin.sheetName = String(row[1] || '').trim();
+  if (lastRow >= 2) {
+    const height = lastRow - 1;
+    const data = sh.getRange(2, 9, height, 2).getDisplayValues(); // الأعمدة I و J
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i] || [];
+      if (!adminUrl) {
+        adminUrl = normalizeSheetLink_(row[0]);
       }
-    }
-    if (!agent.url) {
-      const normalized = normalizeSheetLink_(row[2]);
-      if (normalized) {
-        agent.url = normalized;
-        agent.sheetName = String(row[3] || '').trim();
+      if (!agentUrl) {
+        agentUrl = normalizeSheetLink_(row[1]);
       }
+      if (adminUrl && agentUrl) break;
     }
-    if (admin.url && agent.url) break;
   }
 
-  if (!admin.url) {
+  if (!adminUrl) {
     throw new Error('⚠️ رابط ملف الإدارة الخارجي مفقود (تحقّق من العمود I في Settings).');
   }
 
-  return { admin, agent };
+  return { adminUrl, agentUrl };
 }
 
 /*****************************
@@ -192,16 +184,14 @@ function loadExternalData_() {
     return { agentIndex, adminIdSet, adminRowMap, coloredAgent, coloredAdmin };
   }
 
-  const links = getExternalSheetLinksFromSettings();
+  const { adminUrl, agentUrl } = getExternalSheetLinksFromSettings();
   const cfg   = getConfig_();
-  const adminInfo = links.admin || {};
-  const agentInfo = links.agent || {};
 
   agentIndex   = {};
   coloredAgent = {};
-  if (agentInfo.url) {
-    const agSS = SpreadsheetApp.openByUrl(agentInfo.url);
-    const agSh = getSheetByPreferredName_(agSS, agentInfo.sheetName || cfg.AGENT_SHEET_NAME);
+  if (agentUrl) {
+    const agSS = SpreadsheetApp.openByUrl(agentUrl);
+    const agSh = getSheetByPreferredName_(agSS, cfg.AGENT_SHEET_NAME);
     if (!agSh) throw new Error('⚠️ لم يتم العثور على ورقة الوكيل في الملف الخارجي.');
     const lr = agSh.getLastRow();
     if (lr > 0) {
@@ -226,9 +216,9 @@ function loadExternalData_() {
   adminIdSet   = {};
   adminRowMap  = {};
   coloredAdmin = {};
-  if (adminInfo.url) {
-    const adSS = SpreadsheetApp.openByUrl(adminInfo.url);
-    const adSh = getSheetByPreferredName_(adSS, adminInfo.sheetName || cfg.ADMIN_SHEET_NAME);
+  if (adminUrl) {
+    const adSS = SpreadsheetApp.openByUrl(adminUrl);
+    const adSh = getSheetByPreferredName_(adSS, cfg.ADMIN_SHEET_NAME);
     if (!adSh) throw new Error('⚠️ لم يتم العثور على ورقة الإدارة في الملف الخارجي.');
     const lr = adSh.getLastRow();
     if (lr > 0) {
@@ -1301,12 +1291,11 @@ function getBulkSheetLists() {
     let externalError = '';
 
     try {
-      const links = getExternalSheetLinksFromSettings();
-      const adminInfo = links.admin || {};
-      if (adminInfo.url) {
-        const extSS = SpreadsheetApp.openByUrl(adminInfo.url);
+      const { adminUrl } = getExternalSheetLinksFromSettings();
+      if (adminUrl) {
+        const extSS = SpreadsheetApp.openByUrl(adminUrl);
         externalSheets = extSS.getSheets().map(sh => sh.getName());
-        externalDefault = String(adminInfo.sheetName || '').trim();
+        externalDefault = cfg.ADMIN_SHEET_NAME;
         externalFileName = extSS.getName();
         externalEnabled = true;
       }
@@ -1332,10 +1321,9 @@ function getBulkSheetLists() {
 function createExternalSheetIfMissing(name) {
   name = String(name || '').trim();
   if (!name) throw new Error('⚠️ اكتب اسم ورقة');
-  const links = getExternalSheetLinksFromSettings();
-  const adminInfo = links.admin || {};
-  if (!adminInfo.url) throw new Error('⚠️ لم يتم إعداد ملف الإدارة الخارجي.');
-  const extSS = SpreadsheetApp.openByUrl(adminInfo.url);
+  const { adminUrl } = getExternalSheetLinksFromSettings();
+  if (!adminUrl) throw new Error('⚠️ لم يتم إعداد ملف الإدارة الخارجي.');
+  const extSS = SpreadsheetApp.openByUrl(adminUrl);
   let sh = extSS.getSheetByName(name);
   if (!sh) {
     sh = extSS.insertSheet(name);
@@ -1594,19 +1582,17 @@ function bulkExecuteExact(ids, config) {
     let skippedExternal = 0;
 
     if (includeExternal) {
-      const links = getExternalSheetLinksFromSettings();
-      const adminInfo = links.admin || {};
-      if (!adminInfo.url) throw new Error('⚠️ لم يتم إعداد ملف الإدارة الخارجي.');
-      extAdSS = SpreadsheetApp.openByUrl(adminInfo.url);
-      extAdMainSh = getSheetByPreferredName_(extAdSS, adminInfo.sheetName || cfg.ADMIN_SHEET_NAME);
+      const { adminUrl, agentUrl } = getExternalSheetLinksFromSettings();
+      if (!adminUrl) throw new Error('⚠️ لم يتم إعداد ملف الإدارة الخارجي.');
+      extAdSS = SpreadsheetApp.openByUrl(adminUrl);
+      extAdMainSh = getSheetByPreferredName_(extAdSS, cfg.ADMIN_SHEET_NAME);
       if (!extAdMainSh) throw new Error('⚠️ لم يتم العثور على ورقة الإدارة في الملف الخارجي.');
       extAdminColorBucket = Object.create(null);
       extColoredAdmin = cacheGetChunked_(KEY_EXT_COLORED_ADMIN, cache) || {};
 
-      const agentInfo = links.agent || {};
-      if (agentInfo.url) {
-        const extAgSSObj = SpreadsheetApp.openByUrl(agentInfo.url);
-        extAgSh = getSheetByPreferredName_(extAgSSObj, agentInfo.sheetName || cfg.AGENT_SHEET_NAME);
+      if (agentUrl) {
+        const extAgSSObj = SpreadsheetApp.openByUrl(agentUrl);
+        extAgSh = getSheetByPreferredName_(extAgSSObj, cfg.AGENT_SHEET_NAME);
         if (!extAgSh) throw new Error('⚠️ لم يتم العثور على ورقة الوكيل في الملف الخارجي.');
         extAgentColorBucket = Object.create(null);
         extColoredAgent = cacheGetChunked_(KEY_EXT_COLORED_AGENT, cache) || {};
