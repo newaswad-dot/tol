@@ -14,19 +14,46 @@
     *{box-sizing:border-box}
     body{margin:0; padding:14px; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
 
-    .container{max-width:1100px; margin:0 auto; display:grid; gap:12px}
-    @media(min-width:1060px){
-      .container{ grid-template-columns: 1fr 1fr; align-items:start; }
-      #advCard{ grid-column:1 }
-      #personCard{ grid-column:2 }
-      .span2{ grid-column:1 / span 2; }
+    .container{
+      width:100%;
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      gap:16px;
+      grid-template-columns:1fr;
+      grid-template-areas:
+        "load"
+        "results"
+        "search"
+        "exec"
+        "person"
+        "quick"
+        "bulk";
     }
-    @media(max-width:1059px){
-      #advCard{ order:1 }
-      #personCard{ order:2 }
+    #loadCard{grid-area:load;}
+    #resultsBox{grid-area:results;}
+    #searchCard{grid-area:search;}
+    #execCard{grid-area:exec;}
+    #personCard{grid-area:person;}
+    #quickTools{grid-area:quick;}
+    #bulkCard{grid-area:bulk;}
+    #bulkToggleCard{grid-area:bulkToggle;}
+    #bulkMobileMount{grid-area:bulkMobile;}
+
+    @media(min-width:1060px){
+      .container{
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+        align-items:start;
+        grid-template-areas:
+          "load    results"
+          "search  results"
+          "exec    person"
+          "quick   quick"
+          "bulk    bulk";
+      }
     }
 
-    .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px}
+    .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px}
     .row{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
     .row.stretch > *{flex:1}
     label.small{font-size:12px; color:var(--muted); margin-bottom:6px; display:block}
@@ -62,20 +89,23 @@
     .lastid{display:inline-flex; gap:6px; align-items:center; padding:6px 8px; border-radius:999px;
       border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px}
 
-    #resultsBox, #advCard, #personCard { position:relative; }
+    #resultsBox, #execCard, #personCard { position:relative; }
     @keyframes flashGlowBlue  { 0%{box-shadow:0 0 0 0 rgba(59,130,246,0)} 25%{box-shadow:0 0 0 6px rgba(59,130,246,.22)} 100%{box-shadow:0 0 0 0 rgba(59,130,246,0)} }
     @keyframes flashGlowGreen { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0)} 25%{box-shadow:0 0 0 6px rgba(16,185,129,.22)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
     .flash-blue { animation:flashGlowBlue  .42s ease; }
     .flash-green{ animation:flashGlowGreen .42s ease; }
 
-    .row.stretch > button{ order:-1; flex:0 0 auto; min-width:110px; }
-    .row.stretch > input, .row.stretch > select{ flex:1 1 auto; min-width:0; }
-
     #bulkCard h3{margin:0 0 10px;font-size:18px;font-weight:800;}
     .bulk-note{font-size:12px;color:var(--muted);margin-bottom:10px;}
-    .bulk-input-grid{display:flex;flex-direction:column;gap:10px;align-items:stretch;}
-    .bulk-actions-column{display:flex;flex-direction:column;gap:8px;}
-    .bulk-actions-column > button{width:100%;}
+    #bulkPasteRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;margin-top:12px;}
+    .bulk-paste-grid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;}
+    #bulkActionsRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+    #bulkActionsRow button{flex:1 1 150px;min-height:44px;}
+    #bulkPasteBtn{min-width:120px;min-height:44px;}
+    #bulkIds{min-height:180px;font-size:16px;}
+    #searchCard .paste-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;}
+    #searchCard .paste-row button{min-height:44px;}
+    #idInput{font-size:16px;}
     .bulk-progress{height:6px;background:var(--border);border-radius:999px;overflow:hidden;margin-top:10px;}
     .bulk-progress-bar{height:100%;width:0;background:var(--blue);transition:width .3s ease;}
     .bulk-progress-text{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
@@ -96,6 +126,16 @@
     #bulkToggleCard{display:none;}
     #bulkMobileMount{display:none;}
     .bulk-mobile-hidden{display:none !important;}
+
+    @media(max-width:1200px){
+      .card{
+        background:transparent !important;
+        border:0 !important;
+        box-shadow:none !important;
+        border-radius:12px !important;
+        padding:12px !important;
+      }
+    }
 
     /* Dark */
     body.dark{ background:#0f1115; color:#e5e7eb;}
@@ -132,7 +172,7 @@
   
 /* Mobile-first tweaks */
 html, body { max-width: 100%; overflow-x: hidden; }
-.container { width: 100%; max-width: 940px; margin: 0 auto; padding: 10px; }
+.container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 10px; }
 @media (max-width: 640px){
   .container{ max-width: 100% !important; padding: 12px !important; }
   .card{ border-radius: 14px !important; }
@@ -161,9 +201,9 @@ html, body { max-width: 100%; overflow-x: hidden; }
     <!-- البحث -->
     <div class="card" id="searchCard">
       <label class="small">ID للبحث</label>
-      <div class="row stretch">
-        <button id="pasteSearchBtn" class="btn-blue">لصق ثم بحث</button>
+      <div class="row paste-row" id="searchPasteRow">
         <input id="idInput" type="text" placeholder="أدخل ID هنا" autocomplete="off" inputmode="numeric">
+        <button id="pasteSearchBtn" class="btn-blue">لصق ثم بحث</button>
       </div>
       <div class="row" style="margin-top:6px; justify-content:space-between">
         <div id="pasteHint" class="muted"></div>
@@ -186,7 +226,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
     </div>
 
     <!-- الميزات الذكية -->
-    <div class="card" id="advCard">
+    <div class="card" id="execCard">
       <button id="advRunBtn" class="btn-green" style="width:100%;padding:14px;font-size:16px;font-weight:700;margin-bottom:12px">
         تنفيذ (حسب النتيجة)
       </button>
@@ -334,15 +374,16 @@ html, body { max-width: 100%; overflow-x: hidden; }
         <div class="muted" id="bulkDiscountNote">يُطبّق تلقائيًا على النتائج.</div>
       </div>
 
-      <div class="bulk-input-grid" style="margin-top:12px">
+      <div id="bulkPasteRow">
         <textarea id="bulkIds" placeholder="ألصق عدة IDs (سطر لكل ID أو مفصولة بمسافات)"></textarea>
-        <div class="bulk-actions-column">
-          <button id="bulkPasteBtn" class="btn-blue">لصق ثم بحث</button>
-          <button id="bulkExecuteBtn" class="btn-red" disabled>تنفيذ الكل</button>
-          <button id="bulkResetBtn" class="btn-ghost">إعادة تعيين</button>
-          <button id="bulkCopyAllBtn" class="btn-ghost" disabled>نسخ الكل</button>
-          <button id="bulkCopySalaryBtn" class="btn-ghost" disabled>نسخ الراتب فقط</button>
-        </div>
+        <button id="bulkPasteBtn" class="btn-blue">لصق ثم بحث</button>
+      </div>
+      <div id="bulkActionsRow">
+        <button id="bulkAnalyzeBtn" class="btn-green">تحليل</button>
+        <button id="bulkExecuteBtn" class="btn-red" disabled>تنفيذ الكل</button>
+        <button id="bulkCopyAllBtn" class="btn-ghost" disabled>نسخ الكل</button>
+        <button id="bulkCopySalaryBtn" class="btn-ghost" disabled>نسخ الرواتب</button>
+        <button id="bulkResetBtn" class="btn-ghost">إعادة تعيين</button>
       </div>
 
       <div class="bulk-progress">
@@ -501,6 +542,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
     const bulkDiscount             = document.getElementById('bulkDiscount');
     const bulkIdsInput       = document.getElementById('bulkIds');
     const bulkPasteBtn       = document.getElementById('bulkPasteBtn');
+    const bulkAnalyzeBtn     = document.getElementById('bulkAnalyzeBtn');
     const bulkExecuteBtn     = document.getElementById('bulkExecuteBtn');
     const bulkCopyAllBtn     = document.getElementById('bulkCopyAllBtn');
     const bulkCopySalaryBtn  = document.getElementById('bulkCopySalaryBtn');
@@ -530,7 +572,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
     // عنصر لعرض اسم العميل (من عمود B)
     const nameText   = document.getElementById('nameText');
-const advCard  = document.getElementById('advCard');
+const execCard  = document.getElementById('execCard');
     const advNote  = document.getElementById('advNote');
     const sheetSelect   = document.getElementById('sheetSelect');
     const refreshSheetsBtn = document.getElementById('refreshSheetsBtn');
@@ -720,7 +762,7 @@ const advCard  = document.getElementById('advCard');
     function setBulkBusy(flag){
       bulkBusy = !!flag;
       const disabled = bulkBusy;
-      [bulkPasteBtn, bulkExecuteBtn, bulkCopyAllBtn, bulkCopySalaryBtn, bulkResetBtn,
+      [bulkPasteBtn, bulkAnalyzeBtn, bulkExecuteBtn, bulkCopyAllBtn, bulkCopySalaryBtn, bulkResetBtn,
         bulkScope, bulkTargetSheet, bulkRefreshSheets, bulkNewSheet, bulkCreateSheet,
         bulkExternalTargetSheet, bulkExternalRefreshSheets, bulkExternalNewSheet, bulkExternalCreateSheet,
         bulkAdminColor, bulkWithdrawColor, bulkDiscount, bulkIdsInput]
@@ -740,6 +782,7 @@ const advCard  = document.getElementById('advCard');
     function updateBulkButtons(){
       const hasIds = bulkIds.length > 0;
       if (bulkPasteBtn) bulkPasteBtn.disabled = bulkBusy;
+      if (bulkAnalyzeBtn) bulkAnalyzeBtn.disabled = !hasIds || bulkBusy;
       if (bulkExecuteBtn) bulkExecuteBtn.disabled = !hasIds || !bulkAnalyzed || bulkBusy;
       if (bulkCopyAllBtn) bulkCopyAllBtn.disabled = !bulkExecuted || bulkBusy;
       if (bulkCopySalaryBtn) bulkCopySalaryBtn.disabled = !bulkExecuted || bulkBusy;
@@ -963,7 +1006,7 @@ const advCard  = document.getElementById('advCard');
       }
       if (bulkExternalNote) {
         if (showExternal && !bulkExternalAvailable) {
-          bulkExternalNote.textContent = bulkExternalErrorMessage || '⚠️ أضف رابط ملف الإدارة الخارجي في Settings (الأعمدة I-L).';
+          bulkExternalNote.textContent = bulkExternalErrorMessage || '⚠️ أضف رابط ملف الإدارة الخارجي في Settings (العمود I).';
         } else if (showExternal && bulkExternalErrorMessage) {
           bulkExternalNote.textContent = bulkExternalErrorMessage;
         } else {
@@ -1359,6 +1402,7 @@ const advCard  = document.getElementById('advCard');
 
     if (bulkIdsInput) bulkIdsInput.addEventListener('input', () => handleBulkIdsChange({ reason: 'typing' }));
     if (bulkPasteBtn) bulkPasteBtn.addEventListener('click', handleBulkPaste);
+    if (bulkAnalyzeBtn) bulkAnalyzeBtn.addEventListener('click', () => runBulkAnalyze({ reason: 'manual-button' }));
     if (bulkExecuteBtn) bulkExecuteBtn.addEventListener('click', runBulkExecute);
     if (bulkCopyAllBtn) bulkCopyAllBtn.addEventListener('click', () => copyBulk('all'));
     if (bulkCopySalaryBtn) bulkCopySalaryBtn.addEventListener('click', () => copyBulk('salary'));
@@ -1646,7 +1690,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
       google.script.run
         .withSuccessHandler(res => {
           advNote.textContent = res?.message || 'تم ✅';
-          flash(advCard, 'flash-green');
+          flash(execCard, 'flash-green');
           if (localMap && localMap[id]) {
             localMap[id].aCol = true;
             if (targetMode === 'both') localMap[id].dCol = true;
@@ -1864,7 +1908,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 @media (max-width: 1059px){
   #quickTools{
     grid-column: 1 / -1;
-    grid-row: 999;
+    grid-row: auto;
     margin-top: 12px;
   }
 }
@@ -1889,10 +1933,10 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 /* تحسين تنسيق قسم التنفيذ على الشاشات الصغيرة */
 @media (max-width: 640px){
   /* خلي صفوف القسم قابلة للّف */
-  #advCard .row{ flex-wrap: wrap !important; }
+  #execCard .row{ flex-wrap: wrap !important; }
 
   /* صف (الهدف + التنفيذ + تحديث) */
-  #advCard .row:first-of-type label.small{
+  #execCard .row:first-of-type label.small{
     width: 100% !important;
     min-width: 0 !important;
     display: block;
@@ -1900,60 +1944,60 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
     font-size: 12px;
     opacity: .9;
   }
-  #advCard #sheetSelect,
-  #advCard #targetMode{
+  #execCard #sheetSelect,
+  #execCard #targetMode{
     flex: 1 1 100% !important;
     width: 100% !important;
     min-width: 0 !important;
     height: 40px;
   }
-  #advCard #refreshSheetsBtn{
+  #execCard #refreshSheetsBtn{
     order: 3;                /* نزّله تحت الحقول */
     width: 100%;
     margin-top: 6px;
   }
 
   /* صف الألوان (لون الإدارة / سحب وكالة) */
-  #advCard .row[style*="flex-wrap:wrap"] > div{
+  #execCard .row[style*="flex-wrap:wrap"] > div{
     flex: 1 1 100% !important;
   }
-  #advCard input[type="color"]{
+  #execCard input[type="color"]{
     width: 40px !important;
     height: 34px !important;
   }
 
   /* صف إنشاء ورقة جديدة */
-  #advCard #newSheetName{
+  #execCard #newSheetName{
     flex: 1 1 100% !important;
     width: 100% !important;
   }
-  #advCard #createSheetBtn{
+  #execCard #createSheetBtn{
     flex: 0 0 100% !important;
     width: 100% !important;
     margin-top: 6px;
   }
 
   /* صف الخصم + السويتشات */
-  #advCard input[type="number"]{
+  #execCard input[type="number"]{
     width: 100% !important;
     flex: 1 1 100% !important;
     height: 40px;
   }
-  #advCard .toggle-chip{
+  #execCard .toggle-chip{
     flex: 1 1 48% !important;
     justify-content: space-between;
     margin-top: 6px;
   }
 
   /* زر التنفيذ: مهو كامل أصلاً، نزود راحة على الموبايل */
-  #advCard #advRunBtn{
+  #execCard #advRunBtn{
     padding: 14px 16px !important;
     font-size: 16px !important;
     border-radius: 12px !important;
   }
 
   /* ملاحظات التنفيذ يظهر واضح وتحت الزر */
-  #advCard #advNote{ font-size: 12px; line-height: 1.4; }
+  #execCard #advNote{ font-size: 12px; line-height: 1.4; }
 }
 </style>
 
@@ -1963,7 +2007,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
   function fixAdvLayout(){
     var w = Math.min(window.innerWidth, document.documentElement.clientWidth||window.innerWidth);
     if (w > 640) return;
-    var row = document.querySelector('#advCard .row');
+    var row = document.querySelector('#execCard .row');
     var btn = document.getElementById('refreshSheetsBtn');
     if(row && btn) row.appendChild(btn);
   }
@@ -2181,7 +2225,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
     }
     var runBtn=document.getElementById('advRunBtn');
     var host = runBtn ? runBtn.closest('.card') : null;
-    if(!host) host=document.getElementById('advCard');
+    if(!host) host=document.getElementById('execCard');
     if(!host){
       var cards=document.querySelectorAll('.card');
       if(cards.length) host=cards[cards.length-1];
@@ -2327,123 +2371,94 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 <?!= HtmlService.createHtmlOutputFromFile('AIClient').getContent(); ?>
 </script>
 <!-- ✅ ترتيب موحّد + تثبيت الأدوات السريعة + تنسيق صف البحث -->
-<style id="unified_mobile_layout">
-  @media (max-width:1200px){
-    .container{
-      display:grid !important;
-      grid-template-columns:1fr !important;
-      grid-template-areas:
-        "load"
-        "results"
-        "search"
-        "exec"
-        "person"
-        "quick";
-      gap:14px !important;
-    }
-
-    /* اربط المناطق */
-    #loadCard   { grid-area: load    !important; }
-    #resultsBox { grid-area: results !important; }
-    #searchCard { grid-area: search  !important; }
-    #execCard   { grid-area: exec    !important; }
-    #personCard { grid-area: person  !important; }
-    #quickTools { grid-area: quick   !important; }
-
-    /* خفّف الكروت على الموبايل */
-    .card{
-      background:transparent !important;
-      border:0 !important;
-      box-shadow:none !important;
-      border-radius:12px !important;
-      padding:12px !important;
-      margin:0 !important;
-    }
-
-    /* البحث: حقل + زر اللصق جنب بعض */
-    #searchCard .row,
-    #searchCard .row.stretch{
-      display:grid !important;
-      grid-template-columns:1fr auto !important;
-      column-gap:8px !important;
-      align-items:stretch !important;
-      width:100% !important;
-    }
-    #idInput{
-      width:100% !important; 
-      min-height:44px !important; 
-      font-size:16px !important;
-    }
-    #pasteSearchBtn{
-      height:44px !important; 
-      min-width:130px !important; 
-      white-space:nowrap !important; 
-      font-weight:700 !important;
-    }
-  }
-</style>
-
 <script>
-/* ✅ JS داعم: يضمن وضع #quickTools بعد #personCard (إن كان ظاهر) وإلا بعد #execCard + يثبت زر اللصق بجانب الحقل */
 (function(){
-  var IDS = { results:'resultsBox', search:'searchCard', exec:'execCard', person:'personCard', quick:'quickTools' };
+  const quickTools = document.getElementById('quickTools');
+  const execCard = document.getElementById('execCard');
+  const personCard = document.getElementById('personCard');
+  const bulkCard = document.getElementById('bulkCard');
+  const searchCard = document.getElementById('searchCard');
 
-  function $(id){ return document.getElementById(id); }
-  function visible(el){
+  function isVisible(el){
     if (!el) return false;
-    var cs = getComputedStyle(el);
-    return el.offsetParent !== null && cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0';
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    if (el.offsetParent === null && style.position !== 'fixed') return false;
+    return true;
   }
 
   function placeQuickTools(){
-    var qt = $(IDS.quick), exec = $(IDS.exec), person = $(IDS.person);
-    if (!qt || !exec) return;
+    if (!quickTools || !execCard) return;
+    const anchor = (personCard && isVisible(personCard)) ? personCard : execCard;
+    if (!anchor || !anchor.parentNode) return;
+    const parent = anchor.parentNode;
+    if (quickTools.parentNode !== parent) {
+      parent.insertBefore(quickTools, anchor.nextSibling);
+    } else if (quickTools.previousElementSibling !== anchor) {
+      parent.insertBefore(quickTools, anchor.nextSibling);
+    }
+  }
 
-    var anchor = (person && visible(person)) ? person : exec;
-    var parent = anchor.parentNode;
-
-    // انقل quickTools لنفس الأب ثم ضعه بعد الـ anchor
-    if (qt.parentNode !== parent) parent.appendChild(qt);
-    if (qt.previousElementSibling !== anchor) parent.insertBefore(qt, anchor.nextSibling);
-
-    // ضبط قياسات لطيفة
-    qt.style.maxWidth = '780px';
-    qt.style.width    = '100%';
-    qt.style.margin   = '12px auto';
+  function placeBulkCard(){
+    if (!quickTools || !bulkCard) return;
+    const parent = quickTools.parentNode;
+    if (!parent) return;
+    if (bulkCard.parentNode !== parent) {
+      parent.insertBefore(bulkCard, quickTools.nextSibling);
+    } else if (bulkCard.previousElementSibling !== quickTools) {
+      parent.insertBefore(bulkCard, quickTools.nextSibling);
+    }
   }
 
   function fixSearchRow(){
-    var sc = $(IDS.search);
-    if (!sc) return;
-    // تأكد أن زر اللصق أخ للحقل داخل نفس صف .row
-    var input = sc.querySelector('#idInput');
-    var btn   = document.getElementById('pasteSearchBtn');
-    var row   = sc.querySelector('.row') || sc.querySelector('.row.stretch') || sc;
-    if (input && btn && row && btn.parentNode !== row){
-      row.appendChild(btn);
+    if (!searchCard) return;
+    const row = searchCard.querySelector('#searchPasteRow') || searchCard.querySelector('.paste-row') || searchCard.querySelector('.row');
+    const input = document.getElementById('idInput');
+    const button = document.getElementById('pasteSearchBtn');
+    if (!row) return;
+    row.classList.add('paste-row');
+    if (input && input.parentNode !== row) {
+      row.insertBefore(input, row.firstChild);
     }
-    // فرض الشبكة (احتياط لو كسرت قواعد سابقة)
-    row.style.display = 'grid';
-    row.style.gridTemplateColumns = '1fr auto';
-    row.style.columnGap = '8px';
-    row.style.alignItems = 'stretch';
+    if (button && button.parentNode !== row) {
+      row.appendChild(button);
+    }
+  }
+
+  function fixBulkRow(){
+    if (!bulkCard) return;
+    const row = document.getElementById('bulkPasteRow');
+    const textarea = document.getElementById('bulkIds');
+    const pasteBtn = document.getElementById('bulkPasteBtn');
+    if (!row) return;
+    row.classList.add('bulk-paste-grid');
+    if (textarea && textarea.parentNode !== row) {
+      row.insertBefore(textarea, row.firstChild);
+    }
+    if (pasteBtn && pasteBtn.parentNode !== row) {
+      row.appendChild(pasteBtn);
+    }
   }
 
   function run(){
     placeQuickTools();
+    placeBulkCard();
     fixSearchRow();
+    fixBulkRow();
+  }
+
+  function init(){
+    run();
+    const observer = new MutationObserver(run);
+    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+    window.addEventListener('resize', run);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
+    document.addEventListener('DOMContentLoaded', init, { once:true });
   } else {
-    run();
+    init();
   }
-
-  // راقب أي تغيّر وأعد الترتيب تلقائيًا
-  var obs = new MutationObserver(run);
-  obs.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
-  window.addEventListener('resize', run);
 })();
 </script>
 <script>
