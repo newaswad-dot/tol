@@ -35,6 +35,39 @@ function getConfigStatus() {
   catch(e){ return { ok:false, message:e.message }; }
 }
 
+function getExternalSheetLinksFromSettings() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('Settings');
+  if (!sh) throw new Error('❌ لم يتم العثور على ورقة Settings.');
+
+  const lastRow = sh.getLastRow();
+  if (lastRow < 1) throw new Error('⚠️ لا توجد بيانات في ورقة Settings للروابط الخارجية.');
+
+  const colI = sh.getRange(1, 9, lastRow, 1).getDisplayValues().flat();
+  const colJ = sh.getRange(1,10, lastRow, 1).getDisplayValues().flat();
+
+  let adminUrl = '';
+  for (let i = 0; i < colI.length; i++) {
+    const normalized = normalizeSheetLink_(colI[i]);
+    if (normalized) { adminUrl = normalized; break; }
+  }
+
+  let agentUrl = '';
+  for (let j = 0; j < colJ.length; j++) {
+    const normalized = normalizeSheetLink_(colJ[j]);
+    if (normalized) { agentUrl = normalized; break; }
+  }
+
+  if (!adminUrl && !agentUrl) {
+    throw new Error('⚠️ روابط الملفات الخارجية غير مضافة في Settings (الأعمدة I و J).');
+  }
+
+  if (!adminUrl) throw new Error('⚠️ رابط ملف الإدارة الخارجي مفقود في العمود I.');
+  if (!agentUrl) throw new Error('⚠️ رابط ملف الوكيل الخارجي مفقود في العمود J.');
+
+  return { adminUrl, agentUrl };
+}
+
 /*****************************
  * كاش + مفاتيح
  *****************************/
@@ -45,6 +78,11 @@ const KEY_ADMIN_ROW_MAP   = "adminRowMap_v7";  // { [id]: [rowIndex,...] }
 const KEY_COLORED_AGENT   = "coloredAgentIds_v7";
 const KEY_COLORED_ADMIN   = "coloredAdminIds_v7";
 const KEY_CORR_MAP        = "salaryCorrMap_v1"; // { "30":29, "88":82, ... }
+const KEY_EXT_AGENT_INDEX   = "extAgentIndex_v1";
+const KEY_EXT_ADMIN_IDSET   = "extAdminIdSet_v1";
+const KEY_EXT_ADMIN_ROW_MAP = "extAdminRowMap_v1";
+const KEY_EXT_COLORED_AGENT = "extColoredAgent_v1";
+const KEY_EXT_COLORED_ADMIN = "extColoredAdmin_v1";
 // كاش معلومات الأشخاص:
 const KEY_INFO_ID2GROUP   = "info_id2group_v1"; // { id: groupKey }
 const KEY_INFO_GROUPS     = "info_groups_v1";   // { groupKey: {...} }
@@ -72,6 +110,19 @@ function cacheGetChunked_(keyPrefix, cache) {
     out += part;
   }
   try { return JSON.parse(out); } catch(_) { return null; }
+}
+
+function normalizeSheetLink_(val) {
+  const raw = String(val || "").trim();
+  if (!raw) return "";
+  const idMatch = raw.match(/[-\w]{25,}/);
+  if (idMatch) {
+    return `https://docs.google.com/spreadsheets/d/${idMatch[0]}/edit`;
+  }
+  if (/^https:\/\/docs\.google\.com\/spreadsheets\//i.test(raw)) {
+    return raw.split('#')[0];
+  }
+  return "";
 }
 
 /*****************************
@@ -111,6 +162,93 @@ function buildColoredIdSet_(ssId, sheetName) {
     if (c && c !== '#ffffff' && c !== 'white' && c !== 'transparent') set[id] = 1;
   }
   return set;
+}
+
+function loadExternalData_() {
+  const cache = CacheService.getScriptCache();
+  let agentIndex   = cacheGetChunked_(KEY_EXT_AGENT_INDEX,   cache);
+  let adminIdSet   = cacheGetChunked_(KEY_EXT_ADMIN_IDSET,   cache);
+  let adminRowMap  = cacheGetChunked_(KEY_EXT_ADMIN_ROW_MAP, cache);
+  let coloredAgent = cacheGetChunked_(KEY_EXT_COLORED_AGENT, cache);
+  let coloredAdmin = cacheGetChunked_(KEY_EXT_COLORED_ADMIN, cache);
+
+  if (agentIndex && adminIdSet && adminRowMap && coloredAgent && coloredAdmin) {
+    return { agentIndex, adminIdSet, adminRowMap, coloredAgent, coloredAdmin };
+  }
+
+  const links = getExternalSheetLinksFromSettings();
+  const cfg   = getConfig_();
+
+  agentIndex   = {};
+  coloredAgent = {};
+  if (links.agentUrl) {
+    const agSS = SpreadsheetApp.openByUrl(links.agentUrl);
+    let agSh = agSS.getSheetByName(cfg.AGENT_SHEET_NAME);
+    if (!agSh) agSh = agSS.getSheets()[0] || null;
+    if (!agSh) throw new Error('⚠️ لم يتم العثور على ورقة الوكيل في الملف الخارجي.');
+    const lr = agSh.getLastRow();
+    if (lr > 0) {
+      const colA = agSh.getRange(1,1,lr,1).getValues().flat();
+      const colB = agSh.getRange(1,2,lr,1).getValues().flat();
+      const colC = agSh.getRange(1,3,lr,1).getValues().flat();
+      agentIndex = buildAgentIndex_(colA, colB, colC);
+      try {
+        const bgs = agSh.getRange(1,1,lr,1).getBackgrounds().flat();
+        for (let i=0;i<colA.length;i++){
+          const id = String(colA[i]||'').trim();
+          if (!id) continue;
+          const c = String(bgs[i]||'').toLowerCase();
+          if (c && c !== '#ffffff' && c !== 'white' && c !== 'transparent') {
+            coloredAgent[id] = 1;
+          }
+        }
+      } catch(_) {}
+    }
+  }
+
+  adminIdSet   = {};
+  adminRowMap  = {};
+  coloredAdmin = {};
+  if (links.adminUrl) {
+    const adSS = SpreadsheetApp.openByUrl(links.adminUrl);
+    let adSh = adSS.getSheetByName(cfg.ADMIN_SHEET_NAME);
+    if (!adSh) adSh = adSS.getSheets()[0] || null;
+    if (!adSh) throw new Error('⚠️ لم يتم العثور على ورقة الإدارة في الملف الخارجي.');
+    const lr = adSh.getLastRow();
+    if (lr > 0) {
+      const colA = adSh.getRange(1,1,lr,1).getValues().flat();
+      try {
+        const bgs = adSh.getRange(1,1,lr,1).getBackgrounds().flat();
+        for (let i=0;i<colA.length;i++){
+          const id = String(colA[i]||'').trim();
+          if (!id) continue;
+          adminIdSet[id] = 1;
+          if (!adminRowMap[id]) adminRowMap[id] = [];
+          adminRowMap[id].push(i+1);
+          const c = String(bgs[i]||'').toLowerCase();
+          if (c && c !== '#ffffff' && c !== 'white' && c !== 'transparent') {
+            coloredAdmin[id] = 1;
+          }
+        }
+      } catch(_) {
+        for (let i=0;i<colA.length;i++){
+          const id = String(colA[i]||'').trim();
+          if (!id) continue;
+          adminIdSet[id] = 1;
+          if (!adminRowMap[id]) adminRowMap[id] = [];
+          adminRowMap[id].push(i+1);
+        }
+      }
+    }
+  }
+
+  cachePutChunked_(KEY_EXT_AGENT_INDEX,   agentIndex,   cache);
+  cachePutChunked_(KEY_EXT_ADMIN_IDSET,   adminIdSet,   cache);
+  cachePutChunked_(KEY_EXT_ADMIN_ROW_MAP, adminRowMap,  cache);
+  cachePutChunked_(KEY_EXT_COLORED_AGENT, coloredAgent, cache);
+  cachePutChunked_(KEY_EXT_COLORED_ADMIN, coloredAdmin, cache);
+
+  return { agentIndex, adminIdSet, adminRowMap, coloredAgent, coloredAdmin };
 }
 
 /*****************************
@@ -1118,6 +1256,335 @@ function moveFromLog(picks, targetSheetName, overrideHex){
 }
 
 /** Helper to include partial HTML files in templates */
+function listSheets() {
+  const cfg = getConfig_();
+  const adSS = SpreadsheetApp.openById(cfg.ADMIN_SHEET_ID);
+  return adSS.getSheets().map(sh => sh.getName());
+}
+
+function createSheetIfMissing(name) {
+  name = String(name || '').trim();
+  if (!name) throw new Error('⚠️ اكتب اسم ورقة');
+  const cfg = getConfig_();
+  const adSS = SpreadsheetApp.openById(cfg.ADMIN_SHEET_ID);
+  let sh = adSS.getSheetByName(name);
+  if (!sh) {
+    sh = adSS.insertSheet(name);
+  }
+  return { ok:true, name: sh.getName() };
+}
+
+function normalizeBulkScope_(scope) {
+  const s = String(scope || 'both').trim().toLowerCase();
+  if (s === 'agent') return 'agent';
+  if (s === 'all') return 'all';
+  return 'both';
+}
+
+function buildBulkContext_(scope) {
+  const cache = CacheService.getScriptCache();
+  const agentIndexRaw   = cacheGetChunked_(KEY_AGENT_INDEX,   cache);
+  const adminIdSetRaw   = cacheGetChunked_(KEY_ADMIN_IDSET,   cache);
+  const adminRowMapRaw  = cacheGetChunked_(KEY_ADMIN_ROW_MAP, cache);
+  const coloredAgentRaw = cacheGetChunked_(KEY_COLORED_AGENT, cache);
+  const coloredAdminRaw = cacheGetChunked_(KEY_COLORED_ADMIN, cache);
+  const corrMapRaw      = cacheGetChunked_(KEY_CORR_MAP,      cache);
+
+  const ctx = {
+    agentIndex:   agentIndexRaw   || {},
+    adminIdSet:   adminIdSetRaw   || {},
+    adminRowMap:  adminRowMapRaw  || {},
+    coloredAgent: coloredAgentRaw || {},
+    coloredAdmin: coloredAdminRaw || {},
+    corrMap:      corrMapRaw      || {},
+    hasCoreData:  !!(agentIndexRaw && adminIdSetRaw && coloredAgentRaw && coloredAdminRaw)
+  };
+
+  if (scope === 'all') {
+    const ext = loadExternalData_();
+    ctx.extAgentIndex   = ext.agentIndex   || {};
+    ctx.extAdminIdSet   = ext.adminIdSet   || {};
+    ctx.extAdminRowMap  = ext.adminRowMap  || {};
+    ctx.extColoredAgent = ext.coloredAgent || {};
+    ctx.extColoredAdmin = ext.coloredAdmin || {};
+  }
+
+  return ctx;
+}
+
+function classifyBulkId_(id, ctx, scope) {
+  const out = {
+    id: String(id || '').trim(),
+    status: 'غير موجود',
+    total: 0,
+    names: [],
+    rowsCount: 0,
+    inAgent: false,
+    inAdmin: false,
+    coloredAgent: false,
+    coloredAdmin: false,
+    duplicateLabel: null,
+    source: 'none'
+  };
+
+  if (!out.id) return out;
+
+  const localAgent = ctx.agentIndex[out.id];
+  const extAgent   = (scope === 'all' && ctx.extAgentIndex) ? ctx.extAgentIndex[out.id] : null;
+  const agentNode  = localAgent || extAgent || null;
+  out.rowsCount    = agentNode && Array.isArray(agentNode.rows) ? agentNode.rows.length : 0;
+  out.names        = agentNode && Array.isArray(agentNode.names) ? agentNode.names.slice() : [];
+  out.total        = Number(agentNode && agentNode.sum ? agentNode.sum : 0);
+  out.inAgent      = !!agentNode;
+  if (localAgent) out.source = 'local-agent';
+  else if (extAgent) out.source = 'external-agent';
+
+  let adminRows = ctx.adminRowMap[out.id] || [];
+  if (!adminRows.length && scope === 'all' && ctx.extAdminRowMap) {
+    adminRows = ctx.extAdminRowMap[out.id] || [];
+    if (adminRows.length && out.source === 'none') out.source = 'external-admin';
+  } else if (adminRows.length && out.source === 'none') {
+    out.source = 'local-admin';
+  }
+
+  out.inAdmin = adminRows.length > 0;
+
+  if (out.inAgent) {
+    if (out.inAdmin) {
+      out.status = (out.rowsCount > 1) ? 'سحب وكالة - راتبين' : 'سحب وكالة';
+    } else {
+      out.status = (out.rowsCount > 1) ? 'راتبين' : 'وكالة';
+    }
+  } else if (out.inAdmin) {
+    out.status = 'ادارة';
+  }
+
+  out.coloredAgent = !!(ctx.coloredAgent[out.id] || (scope === 'all' && ctx.extColoredAgent && ctx.extColoredAgent[out.id]));
+  out.coloredAdmin = !!(ctx.coloredAdmin[out.id] || (scope === 'all' && ctx.extColoredAdmin && ctx.extColoredAdmin[out.id]));
+
+  if (out.coloredAgent && out.coloredAdmin) {
+    out.duplicateLabel = 'مكرر';
+  } else if (out.coloredAgent) {
+    out.duplicateLabel = 'مكرر وكالة فقط';
+  } else if (out.coloredAdmin) {
+    out.duplicateLabel = 'مكرر ادارة فقط';
+  }
+
+  return out;
+}
+
+function queueColorRows_(bucket, colorHex, rows) {
+  if (!bucket || !Array.isArray(rows) || !rows.length) return;
+  const key = String(colorHex || '#ddd6fe');
+  if (!bucket[key]) bucket[key] = [];
+  Array.prototype.push.apply(bucket[key], rows);
+}
+
+function copyAdminRowOnce_(adSh, adRows, tgSh, colorHex, targetIdSet, recentCopied) {
+  if (!tgSh || !adSh || !Array.isArray(adRows) || !adRows.length) {
+    return { copied:0, skipped:0 };
+  }
+  const res = { copied:0, skipped:0 };
+  const adLastCol = adSh.getLastColumn();
+  for (let i = 0; i < adRows.length; i++) {
+    const rowIdx = adRows[i];
+    const vals = adSh.getRange(rowIdx, 1, 1, adLastCol).getValues()[0];
+    const curIdFromRow = String(vals[0] || '').trim();
+    if (!curIdFromRow) { res.skipped++; continue; }
+    if (alreadyCopied_(curIdFromRow, tgSh)) { res.skipped++; continue; }
+    if (targetIdSet && targetIdSet[curIdFromRow]) { res.skipped++; continue; }
+    if (recentCopied && recentCopied[curIdFromRow]) { res.skipped++; continue; }
+
+    const destRow = tgSh.getLastRow() + 1;
+    tgSh.appendRow(vals);
+    const lastColTarget = tgSh.getLastColumn() || adLastCol;
+    if (colorHex) {
+      tgSh.getRange(destRow, 1, 1, lastColTarget).setBackground(colorHex);
+    }
+
+    if (targetIdSet) targetIdSet[curIdFromRow] = 1;
+    if (recentCopied) recentCopied[curIdFromRow] = 1;
+
+    try { logCopyOperation(tgSh.getName(), destRow, 1, colorHex || '', curIdFromRow); } catch(_) {}
+
+    res.copied = 1;
+    break;
+  }
+  return res;
+}
+
+function bulkSearchExact(ids, discount, scope) {
+  try {
+    if (!Array.isArray(ids)) throw new Error('⚠️ صيغة القائمة غير صحيحة.');
+    const list = ids.map(v => String(v || '').trim()).filter(Boolean);
+    if (!list.length) throw new Error('⚠️ لا يوجد IDs للبحث.');
+
+    const p = Math.max(0, Math.min(100, Number(discount) || 0));
+    scope = normalizeBulkScope_(scope);
+    const ctx = buildBulkContext_(scope);
+    if (!ctx.hasCoreData) {
+      throw new Error('⚠️ حمّل البيانات أولًا من زر "تحميل البيانات".');
+    }
+
+    const results = [];
+    for (let i = 0; i < list.length; i++) {
+      const info = classifyBulkId_(list[i], ctx, scope);
+      const disc = info.total * (p / 100);
+      const aft  = info.total - disc;
+      results.push({
+        id: info.id,
+        salary: Number(info.total || 0),
+        salaryAfterDiscount: Number(aft || 0),
+        discountAmount: Number(disc || 0),
+        state: info.status,
+        duplicateLabel: info.duplicateLabel,
+        colored: !!(info.coloredAgent || info.coloredAdmin),
+        coloredAgent: !!info.coloredAgent,
+        coloredAdmin: !!info.coloredAdmin,
+        inAgent: !!info.inAgent,
+        inAdmin: !!info.inAdmin,
+        rowsCount: Number(info.rowsCount || 0),
+        names: info.names || [],
+        source: info.source || 'none'
+      });
+    }
+
+    return { ok:true, results: results };
+  } catch (e) {
+    return { ok:false, message: e.message };
+  }
+}
+
+function bulkExecuteExact(ids, config) {
+  try {
+    if (!Array.isArray(ids)) throw new Error('⚠️ لا يوجد IDs للتنفيذ.');
+    const list = ids.map(v => String(v || '').trim()).filter(Boolean);
+    if (!list.length) throw new Error('⚠️ لا يوجد IDs صالحة للتنفيذ.');
+
+    config = config || {};
+    const scope = normalizeBulkScope_(config.scope);
+    const targetMode = String(config.targetMode || (scope === 'agent' ? 'agent' : 'both')).toLowerCase();
+    const doAdminOps = targetMode !== 'agent';
+
+    const cache = CacheService.getScriptCache();
+    const ctx = buildBulkContext_('both');
+    if (!ctx.hasCoreData) {
+      throw new Error('⚠️ حمّل البيانات أولًا من زر "تحميل البيانات".');
+    }
+    const cfg = getConfig_();
+
+    const agSS = SpreadsheetApp.openById(cfg.AGENT_SHEET_ID);
+    const agSh = agSS.getSheetByName(cfg.AGENT_SHEET_NAME);
+    if (!agSh) throw new Error('⚠️ لم يتم العثور على ورقة الوكيل.');
+    const adSS = SpreadsheetApp.openById(cfg.ADMIN_SHEET_ID);
+    const adSh = adSS.getSheetByName(cfg.ADMIN_SHEET_NAME);
+    if (!adSh) throw new Error('⚠️ لم يتم العثور على ورقة الإدارة.');
+
+    let tgSh = null;
+    const targetIdSet = Object.create(null);
+    if (doAdminOps) {
+      const sheetName = String(config.sheetName || '').trim();
+      if (!sheetName) throw new Error('⚠️ اختر ورقة الهدف أولاً');
+      tgSh = adSS.getSheetByName(sheetName);
+      if (!tgSh) {
+        tgSh = adSS.insertSheet(sheetName);
+      }
+      const lr = tgSh.getLastRow();
+      if (lr > 0) {
+        const colA = tgSh.getRange(1,1,lr,1).getDisplayValues();
+        for (let i=0;i<lr;i++){
+          const val = String(colA[i][0] || '').trim();
+          if (val) targetIdSet[val] = 1;
+        }
+      }
+    }
+
+    const withdrawColor = String(config.withdrawColor || config.color || '#ddd6fe');
+    const adminColor    = String(config.adminColor    || config.color || '#fde68a');
+
+    const coloredAgent = cacheGetChunked_(KEY_COLORED_AGENT, cache) || {};
+    const coloredAdmin = cacheGetChunked_(KEY_COLORED_ADMIN, cache) || {};
+
+    const agentColorBucket = Object.create(null);
+    const adminColorBucket = Object.create(null);
+    const coloredIds = [];
+    const recentCopied = Object.create(null);
+    let copied = 0;
+    let skipped = 0;
+
+    list.forEach(id => {
+      const node = ctx.agentIndex[id];
+      const agRows = (node && node.rows) || [];
+      const adRows = ctx.adminRowMap[id] || [];
+      const inAgent = agRows.length > 0;
+      const inAdmin = adRows.length > 0;
+      if (!inAgent && !inAdmin) return;
+
+      let status;
+      if (inAgent) {
+        status = inAdmin ? ((agRows.length > 1) ? 'سحب وكالة - راتبين' : 'سحب وكالة')
+                         : ((agRows.length > 1) ? 'راتبين' : 'وكالة');
+      } else {
+        status = 'ادارة';
+      }
+
+      if (status.indexOf('ادارة') !== -1 && status.indexOf('سحب وكالة') === -1) {
+        if (doAdminOps && adRows.length) {
+          if (!coloredAdmin[id]) {
+            queueColorRows_(adminColorBucket, adminColor, adRows);
+            coloredAdmin[id] = 1;
+            coloredIds.push(id);
+          }
+          const r = copyAdminRowOnce_(adSh, adRows, tgSh, adminColor, targetIdSet, recentCopied);
+          copied += r.copied;
+          skipped += r.skipped;
+          if (r.copied) coloredIds.push(id);
+        }
+      }
+
+      if (status.indexOf('سحب وكالة') !== -1 || status.indexOf('وكالة') !== -1) {
+        if (agRows.length && !coloredAgent[id]) {
+          queueColorRows_(agentColorBucket, withdrawColor, agRows);
+          coloredAgent[id] = 1;
+          coloredIds.push(id);
+        }
+        if (doAdminOps && adRows.length) {
+          if (!coloredAdmin[id]) {
+            queueColorRows_(adminColorBucket, withdrawColor, adRows);
+            coloredAdmin[id] = 1;
+            coloredIds.push(id);
+          }
+          const r = copyAdminRowOnce_(adSh, adRows, tgSh, withdrawColor, targetIdSet, recentCopied);
+          copied += r.copied;
+          skipped += r.skipped;
+          if (r.copied) coloredIds.push(id);
+        }
+      }
+    });
+
+    for (const color in agentColorBucket) {
+      colorRowsFast_(agSh, agentColorBucket[color], color);
+    }
+    for (const color in adminColorBucket) {
+      colorRowsFast_(adSh, adminColorBucket[color], color);
+    }
+
+    SpreadsheetApp.flush();
+
+    cachePutChunked_(KEY_COLORED_AGENT, coloredAgent, cache);
+    cachePutChunked_(KEY_COLORED_ADMIN, coloredAdmin, cache);
+
+    return {
+      ok: true,
+      coloredIds: Array.from(new Set(coloredIds)),
+      copied: copied,
+      skipped: skipped
+    };
+  } catch (e) {
+    return { ok:false, message: e.message };
+  }
+}
+
 function include(name){
   return HtmlService.createHtmlOutputFromFile(name).getContent();
 }
@@ -1129,7 +1596,7 @@ function openSidebar(){
   var html = HtmlService.createTemplateFromFile('Sidebar').evaluate()
     .setTitle('أداة البحث');
   ui.showSidebar(html);
-}/** 🔒 حارس يمنع نسخ صف مكرر: 
+}/** 🔒 حارس يمنع نسخ صف مكرر:
  *   - يتحقق من وجود الـID أصلاً في ورقة الهدف
  *   - يمنع نسخ نفس الـID أكثر من مرة
  */
