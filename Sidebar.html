@@ -73,9 +73,9 @@
 
     #bulkCard h3{margin:0 0 10px;font-size:18px;font-weight:800;}
     .bulk-note{font-size:12px;color:var(--muted);margin-bottom:10px;}
-    .bulk-input-grid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:start;}
-    @media(min-width:600px){.bulk-input-grid{grid-template-columns:1fr 200px;}}
-    .bulk-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .bulk-input-grid{display:flex;flex-direction:column;gap:10px;align-items:stretch;}
+    .bulk-actions-column{display:flex;flex-direction:column;gap:8px;}
+    .bulk-actions-column > button{width:100%;}
     .bulk-progress{height:6px;background:var(--border);border-radius:999px;overflow:hidden;margin-top:10px;}
     .bulk-progress-bar{height:100%;width:0;background:var(--blue);transition:width .3s ease;}
     .bulk-progress-text{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
@@ -88,8 +88,7 @@
     .bulk-table .state-cell{font-weight:700;}
     .bulk-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;background:#fef2f2;color:#b91c1c;}
     .bulk-empty{padding:20px;border:1px dashed var(--border);border-radius:12px;text-align:center;font-size:13px;color:var(--muted);margin-top:12px;}
-    .bulk-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-    .bulk-toolbar > button{flex:1 1 150px;}
+    .bulk-toolbar{display:none;}
 
     /* Dark */
     body.dark{ background:#0f1115; color:#e5e7eb;}
@@ -252,7 +251,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
     <!-- أداة البحث الجماعي -->
     <div class="card span2" id="bulkCard">
       <h3>أداة البحث الجماعي</h3>
-      <div class="bulk-note" id="bulkStatusText">ألصق IDs ثم اضغط «تحليل».</div>
+      <div class="bulk-note" id="bulkStatusText">ألصق IDs وسيتم التحليل تلقائيًا.</div>
 
       <div class="row" style="gap:12px; flex-wrap:wrap; align-items:flex-end">
         <div style="flex:1; min-width:180px">
@@ -277,6 +276,19 @@ html, body { max-width: 100%; overflow-x: hidden; }
         <button id="bulkCreateSheet" class="btn-ghost">إنشاء ورقة</button>
       </div>
 
+      <div id="bulkExternalWrap" style="margin-top:12px; display:none">
+        <label class="small" style="display:block">ورقة الهدف (خارجي) <span id="bulkExternalFileLabel" class="muted"></span></label>
+        <div class="row" style="gap:6px; align-items:center">
+          <select id="bulkExternalTargetSheet" style="flex:1"></select>
+          <button id="bulkExternalRefreshSheets" class="btn-ghost" title="تحديث قائمة الأوراق الخارجية" style="flex:0 0 auto">↻</button>
+        </div>
+        <div class="row stretch" style="margin-top:8px">
+          <input id="bulkExternalNewSheet" type="text" placeholder="اسم ورقة جديدة (خارجية)">
+          <button id="bulkExternalCreateSheet" class="btn-ghost">إنشاء</button>
+        </div>
+        <div id="bulkExternalNote" class="muted" style="margin-top:6px"></div>
+      </div>
+
       <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap">
         <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:180px">
           <input id="bulkAdminColor" type="color" value="#fde68a"
@@ -295,28 +307,18 @@ html, body { max-width: 100%; overflow-x: hidden; }
           <label class="small" style="margin:0">الخصم %</label>
           <input id="bulkDiscount" type="number" min="0" max="100" value="0" step="1" style="width:110px">
         </div>
-        <div class="toggle-chip">
-          <span class="switch-label">تطبيق الخصم مباشرة</span>
-          <label class="ios-toggle">
-            <input id="bulkApplyDiscount" type="checkbox">
-            <span class="slider"></span>
-          </label>
-        </div>
+        <div class="muted" id="bulkDiscountNote">يُطبّق تلقائيًا على النتائج.</div>
       </div>
 
       <div class="bulk-input-grid" style="margin-top:12px">
         <textarea id="bulkIds" placeholder="ألصق عدة IDs (سطر لكل ID أو مفصولة بمسافات)"></textarea>
-        <div class="bulk-actions">
-          <button id="bulkPasteBtn" class="btn-blue" style="width:100%">لصق ثم بحث</button>
-          <button id="bulkAnalyzeBtn" class="btn-green" style="width:100%" disabled>تحليل</button>
-          <button id="bulkExecuteBtn" class="btn-red" style="width:100%" disabled>تنفيذ الكل</button>
+        <div class="bulk-actions-column">
+          <button id="bulkPasteBtn" class="btn-blue">لصق ثم بحث</button>
+          <button id="bulkExecuteBtn" class="btn-red" disabled>تنفيذ الكل</button>
+          <button id="bulkResetBtn" class="btn-ghost">إعادة تعيين</button>
+          <button id="bulkCopyAllBtn" class="btn-ghost" disabled>نسخ الكل</button>
+          <button id="bulkCopySalaryBtn" class="btn-ghost" disabled>نسخ الراتب فقط</button>
         </div>
-      </div>
-
-      <div class="bulk-toolbar">
-        <button id="bulkCopyAllBtn" class="btn-ghost" disabled>نسخ الكل</button>
-        <button id="bulkCopySalaryBtn" class="btn-ghost" disabled>نسخ الرواتب فقط</button>
-        <button id="bulkResetBtn" class="btn-ghost">إعادة تعيين</button>
       </div>
 
       <div class="bulk-progress">
@@ -454,17 +456,22 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
     const bulkCardEl         = document.getElementById('bulkCard');
     const bulkScope          = document.getElementById('bulkScope');
-    const bulkTargetSheet    = document.getElementById('bulkTargetSheet');
-    const bulkRefreshSheets  = document.getElementById('bulkRefreshSheets');
-    const bulkNewSheet       = document.getElementById('bulkNewSheet');
-    const bulkCreateSheet    = document.getElementById('bulkCreateSheet');
-    const bulkAdminColor     = document.getElementById('bulkAdminColor');
-    const bulkWithdrawColor  = document.getElementById('bulkWithdrawColor');
-    const bulkDiscount       = document.getElementById('bulkDiscount');
-    const bulkApplyDiscount  = document.getElementById('bulkApplyDiscount');
+    const bulkTargetSheet          = document.getElementById('bulkTargetSheet');
+    const bulkRefreshSheets        = document.getElementById('bulkRefreshSheets');
+    const bulkNewSheet             = document.getElementById('bulkNewSheet');
+    const bulkCreateSheet          = document.getElementById('bulkCreateSheet');
+    const bulkExternalWrap         = document.getElementById('bulkExternalWrap');
+    const bulkExternalTargetSheet  = document.getElementById('bulkExternalTargetSheet');
+    const bulkExternalRefreshSheets= document.getElementById('bulkExternalRefreshSheets');
+    const bulkExternalNewSheet     = document.getElementById('bulkExternalNewSheet');
+    const bulkExternalCreateSheet  = document.getElementById('bulkExternalCreateSheet');
+    const bulkExternalNote         = document.getElementById('bulkExternalNote');
+    const bulkExternalFileLabel    = document.getElementById('bulkExternalFileLabel');
+    const bulkAdminColor           = document.getElementById('bulkAdminColor');
+    const bulkWithdrawColor        = document.getElementById('bulkWithdrawColor');
+    const bulkDiscount             = document.getElementById('bulkDiscount');
     const bulkIdsInput       = document.getElementById('bulkIds');
     const bulkPasteBtn       = document.getElementById('bulkPasteBtn');
-    const bulkAnalyzeBtn     = document.getElementById('bulkAnalyzeBtn');
     const bulkExecuteBtn     = document.getElementById('bulkExecuteBtn');
     const bulkCopyAllBtn     = document.getElementById('bulkCopyAllBtn');
     const bulkCopySalaryBtn  = document.getElementById('bulkCopySalaryBtn');
@@ -528,6 +535,10 @@ const advCard  = document.getElementById('advCard');
     let bulkBusy = false;
     let bulkAnalyzed = false;
     let bulkExecuted = false;
+    let bulkAutoAnalyzeTimer = null;
+    let bulkExternalAvailable = false;
+    let bulkExternalDefaultName = '';
+    let bulkExternalErrorMessage = '';
 
     const fmt = n => {
       const x = Number(n);
@@ -555,9 +566,10 @@ const advCard  = document.getElementById('advCard');
     function setBulkBusy(flag){
       bulkBusy = !!flag;
       const disabled = bulkBusy;
-      [bulkPasteBtn, bulkAnalyzeBtn, bulkExecuteBtn, bulkCopyAllBtn, bulkCopySalaryBtn, bulkResetBtn,
+      [bulkPasteBtn, bulkExecuteBtn, bulkCopyAllBtn, bulkCopySalaryBtn, bulkResetBtn,
         bulkScope, bulkTargetSheet, bulkRefreshSheets, bulkNewSheet, bulkCreateSheet,
-        bulkAdminColor, bulkWithdrawColor, bulkDiscount, bulkApplyDiscount, bulkIdsInput]
+        bulkExternalTargetSheet, bulkExternalRefreshSheets, bulkExternalNewSheet, bulkExternalCreateSheet,
+        bulkAdminColor, bulkWithdrawColor, bulkDiscount, bulkIdsInput]
         .forEach(el => { if (el) el.disabled = disabled && el !== bulkResetBtn; });
       if (bulkResetBtn) bulkResetBtn.disabled = disabled;
     }
@@ -573,10 +585,10 @@ const advCard  = document.getElementById('advCard');
 
     function updateBulkButtons(){
       const hasIds = bulkIds.length > 0;
-      bulkAnalyzeBtn.disabled = !hasIds || bulkBusy;
-      bulkExecuteBtn.disabled = !bulkAnalyzed || bulkBusy;
-      bulkCopyAllBtn.disabled = !bulkExecuted || bulkBusy;
-      bulkCopySalaryBtn.disabled = !bulkExecuted || bulkBusy;
+      if (bulkPasteBtn) bulkPasteBtn.disabled = bulkBusy;
+      if (bulkExecuteBtn) bulkExecuteBtn.disabled = !hasIds || !bulkAnalyzed || bulkBusy;
+      if (bulkCopyAllBtn) bulkCopyAllBtn.disabled = !bulkExecuted || bulkBusy;
+      if (bulkCopySalaryBtn) bulkCopySalaryBtn.disabled = !bulkExecuted || bulkBusy;
     }
 
     function renderBulkResults(){
@@ -589,11 +601,12 @@ const advCard  = document.getElementById('advCard');
       }
       if (bulkEmptyState) bulkEmptyState.style.display = 'none';
 
-      const discountApplied = !!bulkApplyDiscount?.checked;
+      const discountPct = Math.max(0, Math.min(100, Number(bulkDiscount?.value) || 0));
+      const discountApplied = discountPct > 0;
       bulkResults.forEach((res, idx) => {
         const tr = document.createElement('tr');
-        const salaryBase = discountApplied ? Number(res.salaryAfterDiscount || res.salary || 0)
-                                           : Number(res.salary || 0);
+        const baseSalaryRaw = discountApplied ? (res.salaryAfterDiscount ?? res.salary) : res.salary;
+        const salaryBase = Number(baseSalaryRaw || 0);
         const cells = [
           { text: String(idx + 1) },
           { text: res.id || '' },
@@ -613,14 +626,15 @@ const advCard  = document.getElementById('advCard');
     }
 
     function updateBulkCounters(){
-      const discountApplied = !!bulkApplyDiscount?.checked;
+      const discountPct = Math.max(0, Math.min(100, Number(bulkDiscount?.value) || 0));
+      const discountApplied = discountPct > 0;
       let total = bulkIds.length;
       let colored = 0;
       let salarySum = 0;
       bulkResults.forEach(res => {
         if (res.colored) colored++;
-        const val = discountApplied ? Number(res.salaryAfterDiscount || res.salary || 0)
-                                    : Number(res.salary || 0);
+        const baseSalaryRaw = discountApplied ? (res.salaryAfterDiscount ?? res.salary) : res.salary;
+        const val = Number(baseSalaryRaw || 0);
         salarySum += isNaN(val) ? 0 : val;
       });
       const uncolored = Math.max(0, total - colored);
@@ -630,8 +644,32 @@ const advCard  = document.getElementById('advCard');
       if (bulkSalarySum) bulkSalarySum.textContent = fmt(salarySum);
     }
 
-    function handleBulkIdsChange(){
+    function cancelBulkAutoAnalyze(){
+      if (bulkAutoAnalyzeTimer) {
+        clearTimeout(bulkAutoAnalyzeTimer);
+        bulkAutoAnalyzeTimer = null;
+      }
+    }
+
+    function scheduleBulkAutoAnalyze(reason){
+      if (!bulkIds.length) return;
+      cancelBulkAutoAnalyze();
+      const attempt = () => {
+        if (bulkBusy) {
+          bulkAutoAnalyzeTimer = setTimeout(attempt, 180);
+          return;
+        }
+        bulkAutoAnalyzeTimer = null;
+        runBulkAnalyze({ skipHandleChange: true, reason: reason || 'auto' });
+      };
+      if (bulkStatusText) bulkStatusText.textContent = '⏳ جارٍ التحليل التلقائي…';
+      bulkAutoAnalyzeTimer = setTimeout(attempt, 180);
+    }
+
+    function handleBulkIdsChange(options = {}){
+      const auto = options.auto !== false;
       bulkIds = parseBulkIds(bulkIdsInput?.value || '');
+      cancelBulkAutoAnalyze();
       if (!bulkIds.length) {
         bulkResults = [];
         bulkAnalyzed = false;
@@ -639,31 +677,73 @@ const advCard  = document.getElementById('advCard');
         renderBulkResults();
         updateBulkCounters();
         updateBulkButtons();
-        if (bulkStatusText) bulkStatusText.textContent = 'ألصق IDs ثم اضغط «تحليل».'.trim();
+        updateBulkProgress(0, 1, '');
+        if (bulkEmptyState) bulkEmptyState.style.display = '';
+        if (bulkStatusText) bulkStatusText.textContent = 'ألصق IDs وسيتم التحليل تلقائيًا.';
         return;
       }
+      bulkResults = [];
       bulkAnalyzed = false;
       bulkExecuted = false;
-      updateBulkButtons();
+      renderBulkResults();
       updateBulkCounters();
-      if (bulkStatusText) bulkStatusText.textContent = `مستعد لتحليل ${bulkIds.length} ID.`;
+      updateBulkButtons();
+      updateBulkProgress(0, bulkIds.length, '');
+      if (bulkEmptyState) bulkEmptyState.style.display = 'none';
+      if (bulkStatusText) bulkStatusText.textContent = `تمت إضافة ${bulkIds.length} ID — جارٍ التحليل…`;
+      if (auto) scheduleBulkAutoAnalyze(options.reason || 'ids-change');
     }
 
-    async function refreshBulkSheets(preserveName, listMaybe){
+    async function refreshBulkSheets(preserveLocal, preserveExternal){
       try {
-        const res = Array.isArray(listMaybe) ? listMaybe : await runServer('listSheets');
-        if (!Array.isArray(res)) return;
+        const res = await runServer('getBulkSheetLists');
+        if (!res || res.ok === false) {
+          if (bulkStatusText) bulkStatusText.textContent = `خطأ: ${res?.message || 'فشل تحميل الأوراق'}`;
+          return;
+        }
+
+        const localList = Array.isArray(res.localSheets) ? res.localSheets : [];
         if (bulkTargetSheet) {
+          const current = preserveLocal || bulkTargetSheet.value;
           bulkTargetSheet.innerHTML = '';
-          res.forEach(name => {
+          localList.forEach(name => {
             const opt = document.createElement('option');
             opt.value = opt.textContent = name;
             bulkTargetSheet.appendChild(opt);
           });
-          if (preserveName && res.indexOf(preserveName) !== -1) {
-            bulkTargetSheet.value = preserveName;
+          if (current && localList.includes(current)) {
+            bulkTargetSheet.value = current;
+          } else if (res.localDefault && localList.includes(res.localDefault)) {
+            bulkTargetSheet.value = res.localDefault;
           }
         }
+
+        const externalList = Array.isArray(res.externalSheets) ? res.externalSheets : [];
+        bulkExternalAvailable = !!res.externalEnabled;
+        bulkExternalDefaultName = String(res.externalDefault || '');
+        bulkExternalErrorMessage = String(res.externalError || '');
+        if (bulkExternalTargetSheet) {
+          const currentExt = preserveExternal || bulkExternalTargetSheet.value;
+          bulkExternalTargetSheet.innerHTML = '';
+          externalList.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = name;
+            bulkExternalTargetSheet.appendChild(opt);
+          });
+          if (currentExt && externalList.includes(currentExt)) {
+            bulkExternalTargetSheet.value = currentExt;
+          } else if (bulkExternalDefaultName && externalList.includes(bulkExternalDefaultName)) {
+            bulkExternalTargetSheet.value = bulkExternalDefaultName;
+          } else if (externalList.length) {
+            bulkExternalTargetSheet.value = externalList[0];
+          }
+        }
+
+        if (bulkExternalFileLabel) {
+          bulkExternalFileLabel.textContent = res.externalFileName ? `(${res.externalFileName})` : '';
+        }
+
+        applyBulkScopeUI();
       } catch (err) {
         if (bulkStatusText) bulkStatusText.textContent = `خطأ: ${err?.message || err}`;
       }
@@ -679,7 +759,7 @@ const advCard  = document.getElementById('advCard');
       if (btn) btn.disabled = true;
       try {
         const res = await runServer('createSheetIfMissing', name);
-        await refreshBulkSheets(res?.name || name);
+        await refreshBulkSheets(res?.name || name, bulkExternalTargetSheet?.value);
         bulkNewSheet.value = '';
         if (bulkStatusText) bulkStatusText.textContent = `✅ تم تجهيز الورقة: ${res?.name || name}`;
       } catch (err) {
@@ -689,18 +769,64 @@ const advCard  = document.getElementById('advCard');
       }
     }
 
-    async function runBulkAnalyze(){
-      handleBulkIdsChange();
+    async function createExternalSheet(){
+      const name = (bulkExternalNewSheet?.value || '').trim();
+      if (!name) {
+        if (bulkExternalNote) bulkExternalNote.textContent = '⚠️ اكتب اسم ورقة جديدة أولًا.';
+        return;
+      }
+      const btn = bulkExternalCreateSheet;
+      if (btn) btn.disabled = true;
+      try {
+        const res = await runServer('createExternalSheetIfMissing', name);
+        await refreshBulkSheets(bulkTargetSheet?.value, res?.name || name);
+        if (bulkExternalNewSheet) bulkExternalNewSheet.value = '';
+        if (bulkExternalNote) bulkExternalNote.textContent = `✅ تم تجهيز الورقة الخارجية: ${res?.name || name}`;
+      } catch (err) {
+        if (bulkExternalNote) bulkExternalNote.textContent = `خطأ: ${err?.message || err}`;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function applyBulkScopeUI(){
+      const scope = bulkScope?.value || 'both';
+      const showExternal = scope === 'all';
+      if (bulkExternalWrap) {
+        bulkExternalWrap.style.display = showExternal ? '' : 'none';
+      }
+      if (bulkExternalNote) {
+        if (showExternal && !bulkExternalAvailable) {
+          bulkExternalNote.textContent = bulkExternalErrorMessage || '⚠️ أضف رابط ملف الإدارة الخارجي في Settings (الأعمدة I-L).';
+        } else if (showExternal && bulkExternalErrorMessage) {
+          bulkExternalNote.textContent = bulkExternalErrorMessage;
+        } else {
+          bulkExternalNote.textContent = '';
+        }
+      }
+      if (showExternal && bulkExternalAvailable && bulkExternalTargetSheet && !bulkExternalTargetSheet.value && bulkExternalDefaultName) {
+        const opts = Array.from(bulkExternalTargetSheet.options || []);
+        const match = opts.find(o => o.value === bulkExternalDefaultName);
+        if (match) bulkExternalTargetSheet.value = bulkExternalDefaultName;
+      }
+    }
+
+    async function runBulkAnalyze(options = {}){
+      if (bulkBusy) return;
+      if (!options.skipHandleChange) handleBulkIdsChange({ auto: false, reason: options.reason });
       if (!bulkIds.length) {
         if (bulkStatusText) bulkStatusText.textContent = '⚠️ أضف IDs أولًا.';
         return;
       }
+      cancelBulkAutoAnalyze();
       const discountVal = Math.max(0, Math.min(100, Number(bulkDiscount?.value) || 0));
       const scope = bulkScope?.value || 'both';
       setBulkBusy(true);
       bulkResults = [];
       bulkAnalyzed = false;
       bulkExecuted = false;
+      renderBulkResults();
+      updateBulkCounters();
       updateBulkButtons();
       updateBulkProgress(0, bulkIds.length, 'جارٍ التحليل…');
       if (bulkStatusText) bulkStatusText.textContent = '⏳ جارٍ التحليل…';
@@ -739,15 +865,28 @@ const advCard  = document.getElementById('advCard');
     }
 
     async function runBulkExecute(){
-      if (!bulkAnalyzed) {
-        if (bulkStatusText) bulkStatusText.textContent = '⚠️ نفّذ التحليل أولًا.';
+      if (bulkBusy) {
+        if (bulkStatusText) bulkStatusText.textContent = '⏳ هناك عملية جارية، انتظر قليلًا.';
         return;
       }
+      if (!bulkIds.length) {
+        if (bulkStatusText) bulkStatusText.textContent = '⚠️ لا يوجد IDs.';
+        return;
+      }
+      if (!bulkAnalyzed) {
+        await runBulkAnalyze({ skipHandleChange: true, reason: 'execute' });
+        if (!bulkAnalyzed) {
+          if (bulkStatusText) bulkStatusText.textContent = '⚠️ تعذّر التحليل قبل التنفيذ.';
+          return;
+        }
+      }
+
       const ids = bulkIds.slice();
       if (!ids.length) {
         if (bulkStatusText) bulkStatusText.textContent = '⚠️ لا يوجد IDs.';
         return;
       }
+
       const scope = bulkScope?.value || 'both';
       const targetMode = scope === 'agent' ? 'agent' : 'both';
       const sheetName = bulkTargetSheet?.value || '';
@@ -755,15 +894,26 @@ const advCard  = document.getElementById('advCard');
         if (bulkStatusText) bulkStatusText.textContent = '⚠️ اختر ورقة الهدف.';
         return;
       }
+
+      let externalSheetName = '';
+      if (scope === 'all') {
+        if (!bulkExternalAvailable) {
+          if (bulkExternalNote) bulkExternalNote.textContent = bulkExternalErrorMessage || '⚠️ أضف ملف الإدارة الخارجي أولًا.';
+        }
+        externalSheetName = bulkExternalTargetSheet?.value || '';
+      }
+
       const config = {
         sheetName: sheetName,
         color: bulkWithdrawColor?.value || '#ddd6fe',
         adminColor: bulkAdminColor?.value || '#fde68a',
         withdrawColor: bulkWithdrawColor?.value || '#ddd6fe',
         targetMode: targetMode,
-        scope: scope
+        scope: scope,
+        externalSheetName: externalSheetName
       };
 
+      cancelBulkAutoAnalyze();
       setBulkBusy(true);
       bulkExecuted = false;
       updateBulkButtons();
@@ -774,6 +924,7 @@ const advCard  = document.getElementById('advCard');
       let processed = 0;
       let copiedTotal = 0;
       let skippedTotal = 0;
+      let copiedExternalTotal = 0;
       const coloredSet = new Set();
 
       try {
@@ -786,6 +937,7 @@ const advCard  = document.getElementById('advCard');
           (res.coloredIds || []).forEach(id => coloredSet.add(id));
           copiedTotal += Number(res.copied || 0);
           skippedTotal += Number(res.skipped || 0);
+          copiedExternalTotal += Number(res.copiedExternal || 0);
           processed += part.length;
           updateBulkProgress(processed, ids.length, `تمت معالجة ${Math.min(processed, ids.length)} من ${ids.length}`);
         }
@@ -803,6 +955,7 @@ const advCard  = document.getElementById('advCard');
         const parts = ['✅ تم التنفيذ'];
         if (coloredSet.size) parts.push(`تلوين ${coloredSet.size}`);
         if (copiedTotal) parts.push(`نسخ ${copiedTotal}`);
+        if (copiedExternalTotal) parts.push(`خارجي ${copiedExternalTotal}`);
         if (skippedTotal) parts.push(`تخطي ${skippedTotal}`);
         if (bulkStatusText) bulkStatusText.textContent = parts.join(' • ');
       } catch (err) {
@@ -819,10 +972,11 @@ const advCard  = document.getElementById('advCard');
         if (bulkStatusText) bulkStatusText.textContent = '⚠️ نفّذ التحليل والتطبيق أولًا.';
         return;
       }
-      const discountApplied = !!bulkApplyDiscount?.checked;
+      const discountPct = Math.max(0, Math.min(100, Number(bulkDiscount?.value) || 0));
+      const discountApplied = discountPct > 0;
       const rows = bulkResults.map(res => {
-        const salaryVal = discountApplied ? Number(res.salaryAfterDiscount || res.salary || 0)
-                                          : Number(res.salary || 0);
+        const baseSalaryRaw = discountApplied ? (res.salaryAfterDiscount ?? res.salary) : res.salary;
+        const salaryVal = Number(baseSalaryRaw || 0);
         const salaryStr = salaryVal.toFixed(2);
         if (mode === 'salary') return salaryStr;
         return [res.id || '', salaryStr, res.state || ''].join('\t');
@@ -851,6 +1005,7 @@ const advCard  = document.getElementById('advCard');
 
     function resetBulkTool(){
       if (bulkBusy) return;
+      cancelBulkAutoAnalyze();
       if (bulkIdsInput) bulkIdsInput.value = '';
       bulkIds = [];
       bulkResults = [];
@@ -869,14 +1024,14 @@ const advCard  = document.getElementById('advCard');
         const txt = await navigator.clipboard.readText();
         if (txt && txt.trim()) {
           if (bulkIdsInput) bulkIdsInput.value = txt.trim();
-          handleBulkIdsChange();
+          handleBulkIdsChange({ auto: true, reason: 'paste' });
           return;
         }
       } catch (_) {}
       const fallback = prompt('ألصق IDs يدويًا:');
       if (fallback && bulkIdsInput) {
         bulkIdsInput.value = fallback;
-        handleBulkIdsChange();
+        handleBulkIdsChange({ auto: true, reason: 'paste' });
       }
     }
 
@@ -947,7 +1102,7 @@ const advCard  = document.getElementById('advCard');
           });
           if (bulkTargetSheet) {
             const keep = bulkTargetSheet.value;
-            refreshBulkSheets(keep, list);
+            refreshBulkSheets(keep, bulkExternalTargetSheet?.value);
           }
         })
         .withFailureHandler(err=> advNote.textContent = 'خطأ: '+(err?.message||''))
@@ -1019,29 +1174,35 @@ const advCard  = document.getElementById('advCard');
     .createAdminSheet(name);
     });
 
-    if (bulkIdsInput) bulkIdsInput.addEventListener('input', handleBulkIdsChange);
+    if (bulkIdsInput) bulkIdsInput.addEventListener('input', () => handleBulkIdsChange({ reason: 'typing' }));
     if (bulkPasteBtn) bulkPasteBtn.addEventListener('click', handleBulkPaste);
-    if (bulkAnalyzeBtn) bulkAnalyzeBtn.addEventListener('click', runBulkAnalyze);
     if (bulkExecuteBtn) bulkExecuteBtn.addEventListener('click', runBulkExecute);
     if (bulkCopyAllBtn) bulkCopyAllBtn.addEventListener('click', () => copyBulk('all'));
     if (bulkCopySalaryBtn) bulkCopySalaryBtn.addEventListener('click', () => copyBulk('salary'));
     if (bulkResetBtn) bulkResetBtn.addEventListener('click', resetBulkTool);
-    if (bulkApplyDiscount) bulkApplyDiscount.addEventListener('change', () => {
-      if (!bulkAnalyzed) return;
-      renderBulkResults();
-      updateBulkCounters();
-    });
     if (bulkDiscount) bulkDiscount.addEventListener('input', () => {
-      if (!bulkAnalyzed) return;
-      renderBulkResults();
-      updateBulkCounters();
-    });
-    if (bulkRefreshSheets) bulkRefreshSheets.addEventListener('click', () => refreshBulkSheets(bulkTargetSheet?.value));
-    if (bulkCreateSheet) bulkCreateSheet.addEventListener('click', createBulkSheet);
-    if (bulkScope) bulkScope.addEventListener('change', () => {
+      if (!bulkIds.length) return;
+      bulkAnalyzed = false;
       bulkExecuted = false;
       updateBulkButtons();
+      if (bulkStatusText) bulkStatusText.textContent = '⏳ جارٍ تحديث النتائج بعد تعديل الخصم…';
+      scheduleBulkAutoAnalyze('discount-change');
     });
+    if (bulkRefreshSheets) bulkRefreshSheets.addEventListener('click', () => refreshBulkSheets(bulkTargetSheet?.value, bulkExternalTargetSheet?.value));
+    if (bulkExternalRefreshSheets) bulkExternalRefreshSheets.addEventListener('click', () => refreshBulkSheets(bulkTargetSheet?.value, bulkExternalTargetSheet?.value));
+    if (bulkCreateSheet) bulkCreateSheet.addEventListener('click', createBulkSheet);
+    if (bulkExternalCreateSheet) bulkExternalCreateSheet.addEventListener('click', createExternalSheet);
+    if (bulkScope) bulkScope.addEventListener('change', () => {
+      bulkAnalyzed = false;
+      bulkExecuted = false;
+      applyBulkScopeUI();
+      updateBulkButtons();
+      if (bulkIds.length) scheduleBulkAutoAnalyze('scope-change');
+    });
+
+    refreshBulkSheets();
+    applyBulkScopeUI();
+    updateBulkButtons();
 
     /******** لصق ثم بحث / إنتر ********/
     pasteSearchBtn.addEventListener('click', async ()=>{
