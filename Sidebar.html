@@ -89,6 +89,13 @@
     .bulk-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;background:#fef2f2;color:#b91c1c;}
     .bulk-empty{padding:20px;border:1px dashed var(--border);border-radius:12px;text-align:center;font-size:13px;color:var(--muted);margin-top:12px;}
     .bulk-toolbar{display:none;}
+    .bulk-pagination{display:none;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:space-between;}
+    .bulk-page-btn{border:1px solid var(--border);background:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
+    .bulk-page-btn:disabled{opacity:.55;cursor:not-allowed;}
+    .bulk-page-info{flex:1;text-align:center;font-size:12px;color:var(--muted);}
+    #bulkToggleCard{display:none;}
+    #bulkMobileMount{display:none;}
+    .bulk-mobile-hidden{display:none !important;}
 
     /* Dark */
     body.dark{ background:#0f1115; color:#e5e7eb;}
@@ -107,6 +114,8 @@
     body.dark .bulk-progress{background:#1f2937;}
     body.dark .bulk-progress-bar{background:#38bdf8;}
     body.dark .bulk-chip{background:#7f1d1d;color:#fecaca;}
+    body.dark .bulk-page-btn{background:#111827;color:#e5e7eb;border-color:#374151;}
+    body.dark .bulk-page-info{color:#cbd5e1;}
 
     /* iOS toggles */
     .ios-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
@@ -129,6 +138,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .card{ border-radius: 14px !important; }
   .row{ flex-wrap: wrap !important; }
   input, button, select{ font-size: 16px !important; }
+}
+
+@media (max-width:1200px){
+  #bulkToggleCard{display:block;}
+  #bulkMobileMount{display:grid;gap:12px;}
 }
 
 </style>
@@ -234,6 +248,16 @@ html, body { max-width: 100%; overflow-x: hidden; }
       <div id="aiMountHere"></div>
       <div id="afterAiHook"></div>
     </div>
+
+    <div class="card span2" id="bulkToggleCard">
+      <div class="row" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <strong>إظهار أداة البحث الجماعي</strong>
+        <button id="bulkToggleBtn" class="btn-blue" style="min-width:130px">تفعيل الأداة</button>
+      </div>
+      <div id="bulkToggleNote" class="muted" style="margin-top:6px">تظهر الأداة في الموبايل بعد التفعيل (20 نتيجة لكل صفحة).</div>
+    </div>
+
+    <div id="bulkMobileMount" class="span2"></div>
 
     <!-- بيانات صاحب الـID -->
     <div class="card" id="personCard">
@@ -348,6 +372,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
         </thead>
         <tbody id="bulkResultsBody"></tbody>
       </table>
+      <div id="bulkPagination" class="bulk-pagination">
+        <button id="bulkPrevBtn" class="bulk-page-btn">‹ السابق</button>
+        <span id="bulkPageInfo" class="bulk-page-info"></span>
+        <button id="bulkNextBtn" class="bulk-page-btn">التالي ›</button>
+      </div>
       <div id="bulkEmptyState" class="bulk-empty">لا توجد نتائج بعد.</div>
     </div>
 
@@ -486,7 +515,19 @@ html, body { max-width: 100%; overflow-x: hidden; }
     const bulkSalarySum      = document.getElementById('bulkSalarySum');
     const bulkResultsBody    = document.getElementById('bulkResultsBody');
     const bulkEmptyState     = document.getElementById('bulkEmptyState');
-    
+    const bulkPagination     = document.getElementById('bulkPagination');
+    const bulkPrevBtn        = document.getElementById('bulkPrevBtn');
+    const bulkNextBtn        = document.getElementById('bulkNextBtn');
+    const bulkPageInfo       = document.getElementById('bulkPageInfo');
+    const bulkToggleBtn      = document.getElementById('bulkToggleBtn');
+    const bulkToggleNote     = document.getElementById('bulkToggleNote');
+    const bulkMobileMount    = document.getElementById('bulkMobileMount');
+
+    const bulkCardHome = bulkCardEl ? document.createComment('bulk-card-home') : null;
+    if (bulkCardEl && bulkCardEl.parentNode && bulkCardHome) {
+      bulkCardEl.parentNode.insertBefore(bulkCardHome, bulkCardEl);
+    }
+
     // عنصر لعرض اسم العميل (من عمود B)
     const nameText   = document.getElementById('nameText');
 const advCard  = document.getElementById('advCard');
@@ -539,6 +580,18 @@ const advCard  = document.getElementById('advCard');
     let bulkExternalAvailable = false;
     let bulkExternalDefaultName = '';
     let bulkExternalErrorMessage = '';
+    let bulkPage = 1;
+    let bulkMobileEnabled = false;
+
+    const BULK_PAGE_SIZE = 20;
+    const BULK_MOBILE_STORAGE_KEY = 'bulk_mobile_enabled';
+    const JUST_COLORED_TTL = 120000;
+
+    try {
+      bulkMobileEnabled = localStorage.getItem(BULK_MOBILE_STORAGE_KEY) === '1';
+    } catch (_) {
+      bulkMobileEnabled = false;
+    }
 
     const fmt = n => {
       const x = Number(n);
@@ -562,6 +615,107 @@ const advCard  = document.getElementById('advCard');
         .map(v => v.trim())
         .filter(v => !!v);
     };
+
+    const isMobileLayout = () => window.matchMedia('(max-width: 1200px)').matches;
+
+    function markJustColored(ids, mode){
+      const arr = Array.isArray(ids) ? ids : [ids];
+      const flavor = mode === 'agent' ? 'agent' : 'both';
+      arr.forEach(id => {
+        const key = String(id || '').trim();
+        if (!key) return;
+        justColored[key] = flavor;
+        setTimeout(() => {
+          if (justColored[key] === flavor) delete justColored[key];
+        }, JUST_COLORED_TTL);
+      });
+    }
+
+    function updateBulkPaginationUI(total, startIndex, endIndex, totalPages){
+      if (!bulkPagination) return;
+      if (!total){
+        bulkPagination.style.display = 'none';
+        if (bulkPageInfo) bulkPageInfo.textContent = '';
+        if (bulkPrevBtn) bulkPrevBtn.disabled = true;
+        if (bulkNextBtn) bulkNextBtn.disabled = true;
+        return;
+      }
+      const pages = Math.max(1, totalPages || 1);
+      const hasPages = total > BULK_PAGE_SIZE;
+      bulkPagination.style.display = hasPages ? 'flex' : 'none';
+      const start = Math.min(total, Math.max(1, startIndex + 1));
+      const end = Math.min(total, Math.max(start, endIndex));
+      if (bulkPageInfo){
+        if (hasPages){
+          bulkPageInfo.textContent = `عرض ${start} - ${end} من ${total} (صفحة ${bulkPage}/${pages})`;
+        } else {
+          bulkPageInfo.textContent = `عرض ${total} نتيجة`;
+        }
+      }
+      if (bulkPrevBtn) bulkPrevBtn.disabled = !hasPages || bulkPage <= 1;
+      if (bulkNextBtn) bulkNextBtn.disabled = !hasPages || bulkPage >= pages;
+    }
+
+    function restoreBulkCardHome(){
+      if (!bulkCardEl || !bulkCardHome || !bulkCardHome.parentNode) return;
+      if (bulkCardEl.parentNode !== bulkCardHome.parentNode || bulkCardEl.previousSibling !== bulkCardHome) {
+        bulkCardHome.parentNode.insertBefore(bulkCardEl, bulkCardHome.nextSibling);
+      }
+    }
+
+    function applyBulkMobileState(options = {}){
+      if (!bulkCardEl) return;
+      const mobile = isMobileLayout();
+      const active = bulkMobileEnabled && mobile;
+
+      document.body.classList.toggle('bulk-mobile-active', !!active);
+
+      if (!mobile){
+        restoreBulkCardHome();
+        bulkCardEl.classList.remove('bulk-mobile-hidden');
+        return;
+      }
+
+      if (active){
+        const anchor = document.getElementById('lgpMount') || bulkMobileMount || bulkCardHome;
+        if (anchor && anchor.parentNode){
+          const parent = anchor.parentNode;
+          if (anchor.nextSibling !== bulkCardEl) {
+            parent.insertBefore(bulkCardEl, anchor.nextSibling);
+          }
+        } else {
+          const retry = Number(options.retryCount || 0);
+          if (retry < 5){
+            setTimeout(() => applyBulkMobileState({ retryCount: retry + 1 }), 200);
+          }
+        }
+        bulkCardEl.classList.remove('bulk-mobile-hidden');
+      } else {
+        restoreBulkCardHome();
+        bulkCardEl.classList.add('bulk-mobile-hidden');
+      }
+    }
+
+    function updateBulkToggleUI(){
+      if (bulkToggleBtn){
+        bulkToggleBtn.textContent = bulkMobileEnabled ? 'إيقاف الأداة' : 'تفعيل الأداة';
+        bulkToggleBtn.classList.toggle('btn-blue', !bulkMobileEnabled);
+        bulkToggleBtn.classList.toggle('btn-red', bulkMobileEnabled);
+      }
+      if (bulkToggleNote){
+        if (isMobileLayout()){
+          bulkToggleNote.textContent = bulkMobileEnabled
+            ? 'سيظهر البحث الجماعي أسفل زر السجل (20 نتيجة لكل صفحة).'
+            : 'فعّل الإظهار لعرض البحث الجماعي هنا (20 نتيجة لكل صفحة).';
+        } else {
+          bulkToggleNote.textContent = 'يُعرض البحث الجماعي تلقائيًا على الشاشات الواسعة (20 نتيجة لكل صفحة).';
+        }
+      }
+    }
+
+    function signalBulkMobileChange(){
+      document.dispatchEvent(new CustomEvent('bulk-mobile-state-change'));
+    }
 
     function setBulkBusy(flag){
       bulkBusy = !!flag;
@@ -597,18 +751,28 @@ const advCard  = document.getElementById('advCard');
       }
       if (!bulkResults.length) {
         if (bulkEmptyState) bulkEmptyState.style.display = '';
+        updateBulkPaginationUI(0, 0, 0, 0);
         return;
       }
       if (bulkEmptyState) bulkEmptyState.style.display = 'none';
 
       const discountPct = Math.max(0, Math.min(100, Number(bulkDiscount?.value) || 0));
       const discountApplied = discountPct > 0;
-      bulkResults.forEach((res, idx) => {
+      const total = bulkResults.length;
+      const totalPages = Math.max(1, Math.ceil(total / BULK_PAGE_SIZE));
+      if (bulkPage > totalPages) bulkPage = totalPages;
+      if (bulkPage < 1) bulkPage = 1;
+      const startIndex = (bulkPage - 1) * BULK_PAGE_SIZE;
+      const endIndex = Math.min(total, startIndex + BULK_PAGE_SIZE);
+      const visible = bulkResults.slice(startIndex, endIndex);
+
+      visible.forEach((res, idx) => {
         const tr = document.createElement('tr');
         const baseSalaryRaw = discountApplied ? (res.salaryAfterDiscount ?? res.salary) : res.salary;
         const salaryBase = Number(baseSalaryRaw || 0);
+        const absoluteIndex = startIndex + idx;
         const cells = [
-          { text: String(idx + 1) },
+          { text: String(absoluteIndex + 1) },
           { text: res.id || '' },
           { text: fmt(salaryBase) },
           { html: res.duplicateLabel ? `${res.state || ''} <span class="bulk-chip">${res.duplicateLabel}</span>` : (res.state || '') },
@@ -623,6 +787,7 @@ const advCard  = document.getElementById('advCard');
         });
         if (bulkResultsBody) bulkResultsBody.appendChild(tr);
       });
+      updateBulkPaginationUI(total, startIndex, endIndex, totalPages);
     }
 
     function updateBulkCounters(){
@@ -669,6 +834,7 @@ const advCard  = document.getElementById('advCard');
     function handleBulkIdsChange(options = {}){
       const auto = options.auto !== false;
       bulkIds = parseBulkIds(bulkIdsInput?.value || '');
+      bulkPage = 1;
       cancelBulkAutoAnalyze();
       if (!bulkIds.length) {
         bulkResults = [];
@@ -847,6 +1013,7 @@ const advCard  = document.getElementById('advCard');
           processed += part.length;
           updateBulkProgress(processed, bulkIds.length, `تم تحليل ${Math.min(processed, bulkIds.length)} من ${bulkIds.length}`);
         }
+        bulkPage = 1;
         bulkResults = aggregated;
         bulkAnalyzed = true;
         bulkExecuted = false;
@@ -934,7 +1101,19 @@ const advCard  = document.getElementById('advCard');
           if (!res || !res.ok) {
             throw new Error(res?.message || 'فشل التنفيذ');
           }
-          (res.coloredIds || []).forEach(id => coloredSet.add(id));
+          const newlyColored = Array.isArray(res.coloredIds) ? res.coloredIds : [];
+          newlyColored.forEach(id => coloredSet.add(id));
+          if (newlyColored.length) {
+            markJustColored(newlyColored, targetMode);
+            if (localMap) {
+              newlyColored.forEach(uid => {
+                const key = String(uid || '').trim();
+                if (!key || !localMap[key]) return;
+                localMap[key].aCol = true;
+                if (targetMode === 'both') localMap[key].dCol = true;
+              });
+            }
+          }
           copiedTotal += Number(res.copied || 0);
           skippedTotal += Number(res.skipped || 0);
           copiedExternalTotal += Number(res.copiedExternal || 0);
@@ -946,6 +1125,9 @@ const advCard  = document.getElementById('advCard');
           bulkResults = bulkResults.map(res => coloredSet.has(res.id)
             ? Object.assign({}, res, { colored: true })
             : res);
+        }
+        if (coloredSet.size) {
+          markJustColored(Array.from(coloredSet), targetMode);
         }
         bulkExecuted = true;
         renderBulkResults();
@@ -1011,6 +1193,7 @@ const advCard  = document.getElementById('advCard');
       bulkResults = [];
       bulkAnalyzed = false;
       bulkExecuted = false;
+      bulkPage = 1;
       renderBulkResults();
       updateBulkCounters();
       updateBulkButtons();
@@ -1180,6 +1363,19 @@ const advCard  = document.getElementById('advCard');
     if (bulkCopyAllBtn) bulkCopyAllBtn.addEventListener('click', () => copyBulk('all'));
     if (bulkCopySalaryBtn) bulkCopySalaryBtn.addEventListener('click', () => copyBulk('salary'));
     if (bulkResetBtn) bulkResetBtn.addEventListener('click', resetBulkTool);
+    if (bulkPrevBtn) bulkPrevBtn.addEventListener('click', () => {
+      if (bulkPage > 1) {
+        bulkPage--;
+        renderBulkResults();
+      }
+    });
+    if (bulkNextBtn) bulkNextBtn.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil((bulkResults.length || 0) / BULK_PAGE_SIZE));
+      if (bulkPage < totalPages) {
+        bulkPage++;
+        renderBulkResults();
+      }
+    });
     if (bulkDiscount) bulkDiscount.addEventListener('input', () => {
       if (!bulkIds.length) return;
       bulkAnalyzed = false;
@@ -1199,6 +1395,23 @@ const advCard  = document.getElementById('advCard');
       updateBulkButtons();
       if (bulkIds.length) scheduleBulkAutoAnalyze('scope-change');
     });
+    if (bulkToggleBtn) bulkToggleBtn.addEventListener('click', () => {
+      bulkMobileEnabled = !bulkMobileEnabled;
+      try { localStorage.setItem(BULK_MOBILE_STORAGE_KEY, bulkMobileEnabled ? '1' : '0'); } catch (_) {}
+      updateBulkToggleUI();
+      applyBulkMobileState();
+      signalBulkMobileChange();
+    });
+
+    window.addEventListener('resize', () => {
+      updateBulkToggleUI();
+      applyBulkMobileState();
+      signalBulkMobileChange();
+    });
+
+    updateBulkToggleUI();
+    applyBulkMobileState();
+    setTimeout(signalBulkMobileChange, 0);
 
     refreshBulkSheets();
     applyBulkScopeUI();
@@ -1412,6 +1625,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
             if (targetMode==='both') localMap[uid].dCol = true;
           });
         }
+        markJustColored(lastProfileIds, targetMode);
         refreshCountsLive();
       });
     });
@@ -1437,6 +1651,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
             localMap[id].aCol = true;
             if (targetMode === 'both') localMap[id].dCol = true;
           }
+          markJustColored(id, targetMode);
           if (lastResult) renderResult(lastResult);
           refreshCountsLive();
         })
@@ -1957,19 +2172,42 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 /* زرع زر السجل تحت زر تنفيذ (حسب النتيجة) */
 (function(){
   var mount = document.getElementById('lgpMount');
-  function placeButton(){
-    var host=null, runBtn=document.getElementById('advRunBtn');
-    if(runBtn) host=runBtn.closest('.card');
+  function resolveHost(){
+    if (!mount) return null;
+    var mobile = document.body.classList.contains('bulk-mobile-active') && window.matchMedia('(max-width: 1200px)').matches;
+    if (mobile){
+      var mobileHost = document.getElementById('bulkMobileMount');
+      if (mobileHost) return mobileHost;
+    }
+    var runBtn=document.getElementById('advRunBtn');
+    var host = runBtn ? runBtn.closest('.card') : null;
     if(!host) host=document.getElementById('advCard');
-    if(!host){ var cards=document.querySelectorAll('.card'); if(cards.length) host=cards[cards.length-1]; }
+    if(!host){
+      var cards=document.querySelectorAll('.card');
+      if(cards.length) host=cards[cards.length-1];
+    }
     if(!host) host=document.body;
-    if(mount.parentNode!==host) host.appendChild(mount);
+    return host;
+  }
+  function placeButton(){
+    if(!mount) return;
+    var host = resolveHost();
+    if(!host) return;
+    var mobileHost = document.getElementById('bulkMobileMount');
+    if(host === mobileHost){
+      if(mount.parentNode!==host || host.firstChild!==mount){
+        host.insertBefore(mount, host.firstChild || null);
+      }
+    } else {
+      if(mount.parentNode!==host) host.appendChild(mount);
+    }
     mount.style.display='block';
   }
   function ensureMounted(){
     placeButton();
     setTimeout(placeButton,150); setTimeout(placeButton,400); setTimeout(placeButton,1000);
     window.addEventListener('resize',()=>setTimeout(placeButton,150));
+    document.addEventListener('bulk-mobile-state-change', ()=>setTimeout(placeButton,50));
     new MutationObserver(()=>placeButton()).observe(document.body,{childList:true,subtree:true});
   }
   (document.readyState==='loading') ? document.addEventListener('DOMContentLoaded',ensureMounted) : ensureMounted();
