@@ -7,94 +7,131 @@
   <title>أداة البحث</title>
   <style>
     :root{
-      --bg:#f6f7fb; --card:#ffffff; --border:#e6e8ef; --text:#1f2937; --muted:#6b7280;
-      --blue:#2563eb; --blueH:#1d4ed8; --green:#16a34a; --greenH:#15803d;
-      --red:#dc2626; --redH:#b91c1c; --amber:#f59e0b; --violet:#8b5cf6;
+      --bg:#04090f;
+      --card:#0d151b;
+      --panel:#101b22;
+      --border:#1a2a33;
+      --text:#effef7;
+      --muted:#7ca5ad;
+      --accent:#18f892;
+      --accent-strong:#35ffb2;
+      --accent-fade:rgba(24,248,146,0.16);
+      --danger:#f97373;
+      --warning:#facc15;
+      --info:#38bdf8;
+      --purple:#a855f7;
+      --agent:#22d3ee;
+      --shadow:0 16px 40px rgba(0,0,0,.32);
     }
-    *{box-sizing:border-box}
-    body{margin:0; padding:14px; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-
-    .container{
-      width:100%;
-      max-width:1100px;
-      margin:0 auto;
-      display:grid;
-      gap:16px;
-      grid-template-columns:1fr;
-      grid-template-areas:
-        "load"
-        "results"
-        "search"
-        "exec"
-        "person"
-        "quick"
-        "bulk";
-    }
-    #loadCard{grid-area:load;}
-    #resultsBox{grid-area:results;}
-    #searchCard{grid-area:search;}
-    #execCard{grid-area:exec;}
-    #personCard{grid-area:person;}
-    #quickTools{grid-area:quick;}
-    #bulkCard{grid-area:bulk;}
-    #bulkToggleCard{grid-area:bulkToggle;}
-    #bulkMobileMount{grid-area:bulkMobile;}
-
-    @media(min-width:1060px){
-      .container{
-        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-        align-items:start;
-        grid-template-areas:
-          "load    results"
-          "search  results"
-          "exec    person"
-          "quick   quick"
-          "bulk    bulk";
-      }
-    }
-
-    .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px}
-    .row{display:flex; gap:8px; align-items:center; flex-wrap:nowrap}
-    .row.stretch > *{flex:1}
-    label.small{font-size:12px; color:var(--muted); margin-bottom:6px; display:block}
-    input[type="text"], input[type="number"], select, textarea{
-      width:100%; padding:10px 12px; border:1px solid var(--border);
-      border-radius:10px; font-size:14px; background:#fff
-    }
-    textarea{min-height:120px; resize:vertical; line-height:1.5; font-family:inherit;}
-    button{border:0; border-radius:10px; padding:10px 12px; font-weight:600; cursor:pointer}
-    .btn-blue{background:var(--blue); color:#fff} .btn-blue:hover{background:var(--blueH)}
-    .btn-green{background:var(--green); color:#fff} .btn-green:hover{background:var(--greenH)}
-    .btn-red{background:var(--red); color:#fff} .btn-red:hover{background:var(--redH)}
-    .btn-ghost{background:#0000; border:1px solid var(--border); color:var(--text)}
-    .muted{font-size:11px; color:var(--muted)}
-
-    .results{
-      min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center;
-      gap:10px; text-align:center; background:white; border-radius:12px; padding:16px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.06);
-    }
-    .badges{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center}
-    .badge{font-size:12px; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid transparent; letter-spacing:.2px;}
-    .badge--admin{ background:#fff7ed; color:#9a3412; border-color:#fdba74; }
-    .badge--withdraw{ background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
-    .badge--agent{ background:#ecfdf5; color:#065f46; border-color:#6ee7b7; }
-    .badge--missing{ background:#f9fafb; color:#6b7280; border-color:#ef4444; }
-    .badge--loading{ background:#f3f4f6; color:#6b7280; border-color:#e5e7eb; }
-    .badge--dup{ background:#fef2f2; color:#b91c1c; border-color:#fca5a5; }
-
-    .amountBig{ font-size:44px; font-weight:900; line-height:1; }
-    .subline{ font-size:12px; color:#6b7280; }
-
-    .lastid{display:inline-flex; gap:6px; align-items:center; padding:6px 8px; border-radius:999px;
-      border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px}
-
-    #resultsBox, #execCard, #personCard { position:relative; }
-    @keyframes flashGlowBlue  { 0%{box-shadow:0 0 0 0 rgba(59,130,246,0)} 25%{box-shadow:0 0 0 6px rgba(59,130,246,.22)} 100%{box-shadow:0 0 0 0 rgba(59,130,246,0)} }
-    @keyframes flashGlowGreen { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0)} 25%{box-shadow:0 0 0 6px rgba(16,185,129,.22)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
-    .flash-blue { animation:flashGlowBlue  .42s ease; }
-    .flash-green{ animation:flashGlowGreen .42s ease; }
-
+    *{box-sizing:border-box;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'Tajawal','Cairo','Rubik','Segoe UI',sans-serif;min-height:100vh;display:flex;justify-content:center;}
+    body.dark{background:var(--bg);}
+    body:not(.dark){background:#f4f7fb;color:#0f172a;}
+    .app-shell{width:100%;max-width:420px;padding:24px 18px 96px;position:relative;}
+    body:not(.dark) .app-shell{color:#0f172a;}
+    body:not(.dark) .card{background:#ffffff;border:1px solid rgba(15,23,42,.08);box-shadow:0 14px 28px rgba(15,23,42,.08);color:#0f172a;}
+    body:not(.dark) .muted{color:#64748b;}
+    body:not(.dark) .status-value{color:#047857;text-shadow:none;}
+    body:not(.dark) .status-name{color:#1e293b;}
+    body:not(.dark) .menu-panel{background:#ffffff;color:#0f172a;border-color:rgba(15,23,42,.12);}
+    body:not(.dark) .menu-btn{background:#f1f5f9;color:#0f172a;border-color:rgba(15,23,42,.12);}
+    body:not(.dark) .menu-btn.accent{color:#022012;}
+    body:not(.dark) .menu-overlay{background:rgba(15,23,42,.2);}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;}
+    .menu-toggle{width:52px;height:52px;border-radius:26px;border:1px solid var(--border);background:linear-gradient(145deg,#0a1419,#121e24);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.3s;}
+    .menu-toggle span{display:block;width:22px;height:3px;border-radius:4px;background:var(--accent);transition:.3s;}
+    .menu-toggle span + span{margin-top:4px;}
+    .menu-toggle:active{transform:scale(.96);}
+    .topbar-stats{display:flex;flex-direction:column;gap:4px;text-align:right;font-size:14px;font-weight:600;}
+    .topbar-stats .stat{display:flex;align-items:center;gap:6px;}
+    .topbar-stats strong{font-size:16px;color:var(--accent);}
+    .last-id-pill{padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.02);font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .card{background:linear-gradient(180deg,#101a20,#0c1418);border:1px solid rgba(255,255,255,.04);border-radius:22px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;}
+    .status-card{text-align:center;padding-top:24px;padding-bottom:24px;}
+    .status-header{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:16px;}
+    .status-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:999px;font-weight:800;font-size:14px;letter-spacing:.4px;text-transform:none;background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.08);min-width:120px;}
+    .status-pill--loading{background:rgba(255,255,255,.08);color:var(--muted);}
+    .status-pill--withdraw{background:linear-gradient(120deg,#16f68f,#0ea968);color:#041b11;box-shadow:0 0 16px rgba(22,246,143,.35);}
+    .status-pill--admin{background:linear-gradient(120deg,#60a5fa,#2563eb);color:#031226;}
+    .status-pill--agent{background:linear-gradient(120deg,#22d3ee,#0891b2);color:#02131d;}
+    .status-pill--salary{background:linear-gradient(120deg,#c084fc,#9333ea);color:#210631;}
+    .status-pill--missing{background:linear-gradient(120deg,#f87171,#ef4444);color:#2c0303;}
+    .status-pill--default{background:linear-gradient(120deg,#14f3ff,#1d4ed8);color:#011420;}
+    .status-pill--dup{background:linear-gradient(120deg,#fde68a,#fbbf24);color:#2c1602;}
+    .status-name{font-size:15px;font-weight:600;color:rgba(255,255,255,.82);margin-bottom:8px;}
+    .status-value{font-size:64px;font-weight:900;color:var(--accent);text-shadow:0 0 24px rgba(47,255,185,.6);margin-bottom:6px;}
+    .status-sub{font-size:13px;color:var(--muted);margin-bottom:4px;}
+    .status-extra{font-size:12px;color:rgba(255,255,255,.6);}
+    .status-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px;}
+    .search-card{padding:18px 20px;}
+    .field-label{font-size:13px;color:var(--muted);display:block;margin-bottom:8px;}
+    .search-row{display:flex;gap:12px;}
+    input[type="text"],input[type="number"],select,textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,12,16,.92);color:var(--text);font-size:16px;font-family:inherit;transition:border .2s,box-shadow .2s;}
+    input[type="text"]:focus,input[type="number"]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-fade);}
+    textarea{min-height:140px;resize:vertical;}
+    .btn{border:0;border-radius:16px;padding:12px 18px;font-weight:800;font-size:16px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+    .btn:active{transform:scale(.97);}
+    .btn.primary{background:linear-gradient(135deg,var(--accent-strong),var(--accent));color:#022012;box-shadow:0 10px 30px rgba(31,255,174,.35);}
+    .btn.action{width:100%;background:linear-gradient(135deg,#16f2a1,#00bb7a);color:#042017;font-size:20px;padding:18px;}
+    .btn.ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid rgba(255,255,255,.08);}
+    .btn.ghost:hover{border-color:var(--accent);}
+    .btn.btn-danger{background:linear-gradient(135deg,#fb7185,#ef4444);color:#fff5f5;box-shadow:0 10px 30px rgba(239,68,68,.35);}
+    .btn.btn-danger:hover{box-shadow:0 12px 34px rgba(239,68,68,.5);}
+    .icon-btn{width:46px;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--text);font-size:18px;cursor:pointer;}
+    .icon-btn:hover{border-color:var(--accent);}
+    .exec-card{padding:22px 20px;}
+    .exec-header{display:flex;flex-direction:column;gap:12px;margin-bottom:18px;}
+    .exec-group{margin-bottom:18px;}
+    .pill-row{display:flex;gap:10px;align-items:center;}
+    .pill-select{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.03);border-radius:16px;padding:12px 16px;border:1px solid rgba(255,255,255,.08);color:var(--text);font-weight:600;}
+    .exec-colors .color-row{display:flex;gap:12px;flex-wrap:wrap;}
+    .color-chip{flex:1;min-width:150px;background:rgba(255,255,255,.03);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;}
+    .color-chip input{width:46px;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.2);padding:0;background:transparent;}
+    .discount-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .discount-row input[type="number"]{max-width:90px;text-align:center;}
+    .toggle{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.08);font-size:13px;font-weight:700;}
+    .toggle input{appearance:none;-webkit-appearance:none;width:0;height:0;position:absolute;opacity:0;}
+    .toggle .slider{position:relative;width:48px;height:26px;background:rgba(255,255,255,.1);border-radius:999px;transition:.3s;}
+    .toggle .slider::before{content:"";position:absolute;width:22px;height:22px;left:2px;top:2px;border-radius:50%;background:#fff;transition:.3s;}
+    .toggle input:checked + .slider{background:var(--accent);}
+    .toggle input:checked + .slider::before{transform:translateX(22px);background:#032316;}
+    .muted{color:var(--muted);font-size:13px;}
+    .search-meta{margin-top:10px;}
+    .person-card textarea{margin-top:14px;}
+    .person-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;}
+    .person-actions{display:flex;gap:10px;}
+    .note-success{background:rgba(24,248,146,.12);border:1px solid rgba(24,248,146,.45);color:var(--accent);padding:12px 14px;border-radius:16px;font-weight:700;line-height:1.6;margin-top:6px;}
+    .note-success strong{display:block;font-size:15px;color:#b0ffda;}
+    #advNote{min-height:38px;}
+    .menu-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:9999;padding:20px;}
+    body.menu-open .menu-overlay{display:flex;}
+    .menu-panel{width:100%;max-width:360px;background:linear-gradient(180deg,#101a20,#0a1116);border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:24px 20px;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column;gap:16px;}
+    .menu-close{position:absolute;top:14px;left:14px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text);font-size:20px;cursor:pointer;}
+    .menu-header{font-size:20px;font-weight:800;text-align:center;margin-bottom:8px;}
+    .menu-buttons{display:flex;flex-direction:column;gap:12px;}
+    .menu-btn{width:100%;padding:16px;border-radius:18px;font-weight:800;font-size:16px;cursor:pointer;background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.08);}
+    .menu-btn.accent{background:linear-gradient(135deg,var(--accent-strong),var(--accent));color:#021e12;box-shadow:0 12px 26px rgba(24,248,146,.32);}
+    .menu-btn:hover{border-color:var(--accent);}
+    .menu-btn.menu-btn--ok{background:linear-gradient(135deg,#4ade80,#22c55e);color:#062a16;box-shadow:0 12px 28px rgba(34,197,94,.35);}
+    .menu-btn.menu-btn--error{background:linear-gradient(135deg,#fb7185,#ef4444);color:#fff0f0;box-shadow:0 12px 28px rgba(239,68,68,.4);}
+    .menu-switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-weight:700;}
+    .menu-switch input{appearance:none;-webkit-appearance:none;width:0;height:0;opacity:0;position:absolute;}
+    .menu-switch .slider{position:relative;width:54px;height:28px;background:rgba(255,255,255,.14);border-radius:999px;transition:.3s;}
+    .menu-switch .slider::before{content:"";position:absolute;width:24px;height:24px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.3s;}
+    .menu-switch input:checked + .slider{background:var(--accent);}
+    .menu-switch input:checked + .slider::before{transform:translateX(24px);background:#032316;}
+    .menu-link{width:100%;padding:12px;border-radius:14px;background:rgba(255,255,255,.02);color:var(--muted);border:1px solid rgba(255,255,255,.04);font-weight:600;cursor:pointer;}
+    .menu-note{font-size:12px;line-height:1.6;}
+    .search-row button{flex:0 0 auto;}
+    .flash-blue{animation:flashGlowBlue .46s ease;}
+    .flash-green{animation:flashGlowGreen .46s ease;}
+    @keyframes flashGlowBlue{0%{box-shadow:0 0 0 0 rgba(56,189,248,0);}40%{box-shadow:0 0 0 14px rgba(56,189,248,.28);}100%{box-shadow:0 0 0 0 rgba(56,189,248,0);}}
+    @keyframes flashGlowGreen{0%{box-shadow:0 0 0 0 rgba(16,185,129,0);}40%{box-shadow:0 0 0 14px rgba(16,185,129,.3);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+    #logAnchor{margin-top:12px;}
+    .bulk-area{display:none;margin-top:24px;}
+    body.show-bulk .bulk-area{display:block;}
+    .bulk-area .card{box-shadow:none;background:rgba(8,14,19,.9);border:1px solid rgba(255,255,255,.05);}
     #bulkCard h3{margin:0 0 10px;font-size:18px;font-weight:800;}
     .bulk-note{font-size:12px;color:var(--muted);margin-bottom:10px;}
     #bulkPasteRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;margin-top:12px;}
@@ -104,414 +141,311 @@
     #bulkPasteBtn{min-width:120px;min-height:44px;}
     #bulkIds{min-height:180px;font-size:16px;}
     #searchCard .paste-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;}
-    #searchCard .paste-row button{min-height:44px;}
-    #idInput{font-size:16px;}
-    .bulk-progress{height:6px;background:var(--border);border-radius:999px;overflow:hidden;margin-top:10px;}
-    .bulk-progress-bar{height:100%;width:0;background:var(--blue);transition:width .3s ease;}
+    #idInput{font-size:18px;font-weight:600;text-align:center;}
+    .bulk-progress{height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:10px;}
+    .bulk-progress-bar{height:100%;width:0;background:var(--accent);transition:width .3s ease;}
     .bulk-progress-text{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
     .bulk-counters{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--muted);}
     .bulk-counters b{font-size:13px;color:var(--text);}
     .bulk-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;}
-    .bulk-table th,.bulk-table td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);}
-    .bulk-table th{font-weight:700;color:var(--muted);background:#f9fafb;}
-    .bulk-table tbody tr:nth-child(even){background:#f9fafb;}
+    .bulk-table th,.bulk-table td{padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);}
+    .bulk-table th{font-weight:700;color:var(--muted);background:rgba(255,255,255,.03);}
+    .bulk-table tbody tr:nth-child(even){background:rgba(255,255,255,.02);}
     .bulk-table .state-cell{font-weight:700;}
-    .bulk-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;background:#fef2f2;color:#b91c1c;}
-    .bulk-empty{padding:20px;border:1px dashed var(--border);border-radius:12px;text-align:center;font-size:13px;color:var(--muted);margin-top:12px;}
+    .bulk-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;background:rgba(248,113,113,.16);color:#fecaca;}
+    .bulk-empty{padding:20px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;text-align:center;font-size:13px;color:var(--muted);margin-top:12px;}
     .bulk-toolbar{display:none;}
     .bulk-pagination{display:none;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:space-between;}
-    .bulk-page-btn{border:1px solid var(--border);background:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
+    .bulk-page-btn{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);}
     .bulk-page-btn:disabled{opacity:.55;cursor:not-allowed;}
     .bulk-page-info{flex:1;text-align:center;font-size:12px;color:var(--muted);}
     #bulkToggleCard{display:none;}
+    #bulkCard{display:none;}
     #bulkMobileMount{display:none;}
-    .bulk-mobile-hidden{display:none !important;}
-
-    @media(max-width:1200px){
-      .card{
-        background:transparent !important;
-        border:0 !important;
-        box-shadow:none !important;
-        border-radius:12px !important;
-        padding:12px !important;
-      }
+    body.show-bulk #bulkToggleCard{display:block;}
+    body.show-bulk #bulkCard{display:block;}
+    body.show-bulk #bulkMobileMount{display:grid;gap:12px;}
+    @media(min-width:700px){
+      body{padding-top:30px;}
+      .app-shell{max-width:460px;}
     }
-
-    /* Dark */
-    body.dark{ background:#0f1115; color:#e5e7eb;}
-    body.dark .card{ background:#1f232b; border-color:#2d323c; color:#e5e7eb; }
-    body.dark input, body.dark select{ background:#111827; color:#f9fafb; border-color:#374151;}
-    body.dark textarea{ background:#111827; color:#f9fafb; border-color:#374151;}
-    body.dark .results{ background:#1f232b; }
-    body.dark .amountBig{ color:#22c55e; text-shadow:0 0 6px rgba(34,197,94,.7); }
-    body.dark .lastid{ background:#111827; border-color:#2a2f39; color:#e5e7eb }
-    body.dark .muted{ color:#cbd5e1; }
-    body.dark .btn-ghost{ color:#e5e7eb; }
-    body.dark .badge{ border-color:#374151; }
-    body.dark .bulk-table th{background:#1a1e27;color:#cbd5e1;}
-    body.dark .bulk-table tbody tr:nth-child(even){background:#161b24;}
-    body.dark .bulk-counters b{color:#e5e7eb;}
-    body.dark .bulk-progress{background:#1f2937;}
-    body.dark .bulk-progress-bar{background:#38bdf8;}
-    body.dark .bulk-chip{background:#7f1d1d;color:#fecaca;}
-    body.dark .bulk-page-btn{background:#111827;color:#e5e7eb;border-color:#374151;}
-    body.dark .bulk-page-info{color:#cbd5e1;}
-
-    /* iOS toggles */
-    .ios-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-    .ios-toggle input{opacity:0;width:0;height:0}
-    .slider{position:relative;display:inline-block;width:50px;height:28px;background:#cfcfcf;border-radius:28px;transition:.25s}
-    .slider:before{content:"";position:absolute;left:3px;bottom:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.25s}
-    input:checked + .slider{background:#34c759}
-    input:checked + .slider:before{transform:translateX(22px)}
-    body.dark input:checked + .slider{background:#22c55e}
-    .switch-label{font-size:13px;font-weight:600;white-space:nowrap}
-    .toggle-chip{display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--border);border-radius:14px;background:#fafafa}
-    body.dark .toggle-chip{background:#111827;border-color:#2d323c}
-    .toggles-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  
-/* Mobile-first tweaks */
-html, body { max-width: 100%; overflow-x: hidden; }
-.container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 10px; }
-@media (max-width: 640px){
-  .container{ max-width: 100% !important; padding: 12px !important; }
-  .card{ border-radius: 14px !important; }
-  .row{ flex-wrap: wrap !important; }
-  input, button, select{ font-size: 16px !important; }
-}
-
-@media (max-width:1200px){
-  #bulkToggleCard{display:block;}
-  #bulkMobileMount{display:grid;gap:12px;}
-}
-
-</style>
+  </style>
 </head>
-<body>
-  <div class="container">
-
-    <!-- تحميل البيانات -->
-    <div class="card span2" id="loadCard">
-      <div class="row stretch">
-        <button id="reloadBtn" class="btn-red">تحميل البيانات</button>
-      </div>
-      <div id="loadNote" class="muted" style="margin-top:6px"></div>
-    </div>
-
-    <!-- البحث -->
-    <div class="card" id="searchCard">
-      <label class="small">ID للبحث</label>
-      <div class="row paste-row" id="searchPasteRow">
-        <input id="idInput" type="text" placeholder="أدخل ID هنا" autocomplete="off" inputmode="numeric">
-        <button id="pasteSearchBtn" class="btn-blue">لصق ثم بحث</button>
-      </div>
-      <div class="row" style="margin-top:6px; justify-content:space-between">
-        <div id="pasteHint" class="muted"></div>
-        <div id="lastIdPill" class="lastid" style="display:none">آخر ID: <b id="lastIdText"></b></div>
-      </div>
-    </div>
-
-    <!-- النتائج -->
-    <div class="card results" id="resultsBox">
-      <div class="badges">
-        <span id="statusBadge" class="badge badge--loading">—</span>
-        <span id="dupBadge" class="badge badge--dup" style="display:none">مكرر</span>
-        <span id="statusChipsRow"></span>
-      </div>
-      <!-- اسم العميل من عمود B -->
-      <div id="nameText" class="subline">—</div>
-            <div id="amountText" class="amountBig">—</div>
-      <div id="multiText" class="subline"></div>
-      <div id="extraDupInfo" class="muted" style="margin-top:4px"></div>
-    </div>
-
-    <!-- الميزات الذكية -->
-    <div class="card" id="execCard">
-      <button id="advRunBtn" class="btn-green" style="width:100%;padding:14px;font-size:16px;font-weight:700;margin-bottom:12px">
-        تنفيذ (حسب النتيجة)
+<body class="neo dark">
+  <div class="app-shell">
+    <header class="topbar">
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="فتح القائمة">
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
-      <div id="advNote" class="muted" style="margin-bottom:12px"></div>
-
-      <div class="row" style="gap:8px; align-items:center">
-        <label class="small" style="margin:0;min-width:60px">الهدف</label>
-        <select id="sheetSelect" style="flex:1"></select>
-
-        <label class="small" style="margin:0;min-width:70px">التنفيذ</label>
-        <select id="targetMode" style="flex:1">
-          <option value="agent">الوكيل فقط</option>
-          <option value="both" selected>الإدارة + الوكيل</option>
-        </select>
-
-        <button id="refreshSheetsBtn" class="btn-ghost" title="تحديث قائمة الأوراق">↻</button>
+      <div class="topbar-stats">
+        <div class="stat">ملون: <strong id="qtColored">—</strong></div>
+        <div class="stat">غير ملون: <strong id="qtUncolored">—</strong></div>
       </div>
-
-      <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap">
-        <div style="flex:1;display:flex;align-items:center;gap:8px">
-          <input id="adminColor" type="color" value="#fde68a"
-            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
-          <label class="small" style="margin:0">لون الإدارة</label>
-        </div>
-        <div style="flex:1;display:flex;align-items:center;gap:8px">
-          <input id="withdrawColor" type="color" value="#ddd6fe"
-            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
-          <label class="small" style="margin:0">لون سحب وكالة</label>
-        </div>
+      <div id="lastIdPill" class="last-id-pill" style="display:none">
+        آخر ID: <b id="lastIdText"></b>
       </div>
+    </header>
 
-      <div class="row stretch" style="margin-top:10px">
-        <input id="newSheetName" type="text" placeholder="اسم ورقة جديدة (داخل الإدارة)">
-        <button id="createSheetBtn" class="btn-ghost">إنشاء</button>
-      </div>
+    <main class="main-flow">
+      <section id="resultsBox" class="card status-card">
+        <div class="status-header">
+          <span id="statusBadge" class="status-pill status-pill--loading">—</span>
+          <span id="dupBadge" class="status-pill status-pill--dup" style="display:none">مكرر</span>
+        </div>
+        <div id="amountText" class="status-value">—</div>
+        <div id="nameText" class="status-name">—</div>
+        <div id="multiText" class="status-sub"></div>
+        <div id="extraDupInfo" class="status-extra"></div>
+        <div id="statusChipsRow" class="status-chips"></div>
+      </section>
 
-      <div class="row" style="margin-top:12px; align-items:center; gap:12px; flex-wrap:wrap">
-        <div class="row" style="gap:8px; align-items:center">
-          <label class="small" style="margin:0">الخصم %</label>
-          <input id="discountInput" type="number" min="0" max="100" value="0" step="1" style="width:110px">
+      <section id="searchCard" class="card search-card">
+        <label class="field-label" for="idInput">ID للبحث</label>
+        <div class="search-row">
+          <input id="idInput" type="text" placeholder="أدخل ID هنا" autocomplete="off" inputmode="numeric">
+          <button id="pasteSearchBtn" class="btn primary">لصق ثم بحث</button>
+        </div>
+        <div class="search-meta">
+          <div id="pasteHint" class="muted"></div>
+        </div>
+      </section>
+
+      <section id="execCard" class="card exec-card">
+        <div class="exec-header">
+          <button id="advRunBtn" class="btn action">تنفيذ</button>
+          <div id="advNote" class="muted"></div>
         </div>
 
-        <div class="toggle-chip">
-          <span class="switch-label">الخصم لحظيًا</span>
-          <label class="ios-toggle">
-            <input id="applyDiscountToMessage" type="checkbox">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-chip">
-          <span class="switch-label">تصحيح الراتب</span>
-          <label class="ios-toggle">
-            <input id="enableSalaryCorrection" type="checkbox">
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-      <div id="aiMountHere"></div>
-      <div id="afterAiHook"></div>
-    </div>
-
-    <div class="card span2" id="bulkToggleCard">
-      <div class="row" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-        <strong>إظهار أداة البحث الجماعي</strong>
-        <button id="bulkToggleBtn" class="btn-blue" style="min-width:130px">تفعيل الأداة</button>
-      </div>
-      <div id="bulkToggleNote" class="muted" style="margin-top:6px">تظهر الأداة في الموبايل بعد التفعيل (20 نتيجة لكل صفحة).</div>
-    </div>
-
-    <div id="bulkMobileMount" class="span2"></div>
-
-    <!-- بيانات صاحب الـID -->
-    <div class="card" id="personCard">
-      <div class="row" style="justify-content:space-between; align-items:center">
-        <strong>بيانات صاحب الـID</strong>
-        <div class="row" style="gap:6px; flex:0 0 auto">
-          <button id="copyMsgBtn" class="btn-green">نسخ الرسالة</button>
-          <button id="colorAllBtn" class="btn-ghost" title="تلوين كل الـIDs لهذا الشخص بسرعة">تلوين الكل</button>
-        </div>
-      </div>
-      <div id="personNote" class="muted" style="margin-top:6px">—</div>
-      <textarea id="personMsg" rows="8" style="width:100%; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:10px; font-family:inherit; font-size:14px" readonly></textarea>
-    </div>
-
-    <!-- أداة البحث الجماعي -->
-    <div class="card span2" id="bulkCard">
-      <h3>أداة البحث الجماعي</h3>
-      <div class="bulk-note" id="bulkStatusText">ألصق IDs وسيتم التحليل تلقائيًا.</div>
-
-      <div class="row" style="gap:12px; flex-wrap:wrap; align-items:flex-end">
-        <div style="flex:1; min-width:180px">
-          <label class="small">النطاق</label>
-          <select id="bulkScope">
-            <option value="agent">الوكيل فقط</option>
-            <option value="both" selected>الإدارة + الوكيل</option>
-            <option value="all">الكل (يشمل الخارجي)</option>
-          </select>
-        </div>
-        <div style="flex:1; min-width:220px">
-          <label class="small">ورقة الهدف</label>
-          <div class="row" style="gap:6px; align-items:center">
-            <select id="bulkTargetSheet" style="flex:1"></select>
-            <button id="bulkRefreshSheets" class="btn-ghost" title="تحديث قائمة الأوراق" style="flex:0 0 auto">↻</button>
+        <div class="exec-group">
+          <label class="field-label" for="sheetSelect">الهدف</label>
+          <div class="pill-row">
+            <select id="sheetSelect" class="pill-select"></select>
+            <button id="refreshSheetsBtn" class="icon-btn" title="تحديث قائمة الأوراق">↻</button>
           </div>
         </div>
+
+        <div class="exec-group">
+          <label class="field-label" for="targetMode">التنفيذ</label>
+          <select id="targetMode" class="pill-select">
+            <option value="agent">الوكيل فقط</option>
+            <option value="both" selected>الإدارة + الوكيل</option>
+          </select>
+        </div>
+
+        <div class="exec-group exec-colors">
+          <label class="field-label">الألوان</label>
+          <div class="color-row">
+            <div class="color-chip">
+              <span>الإدارة</span>
+              <input id="adminColor" type="color" value="#fde68a">
+            </div>
+            <div class="color-chip">
+              <span>سحب الوكالة</span>
+              <input id="withdrawColor" type="color" value="#ddd6fe">
+            </div>
+          </div>
+        </div>
+
+        <div class="exec-group">
+          <label class="field-label" for="newSheetName">إنشاء ورقة</label>
+          <div class="pill-row">
+            <input id="newSheetName" type="text" placeholder="اسم ورقة جديدة (داخل الإدارة)">
+            <button id="createSheetBtn" class="btn ghost">إنشاء</button>
+          </div>
+        </div>
+
+        <div class="exec-group">
+          <label class="field-label">الخصم</label>
+          <div class="discount-row">
+            <input id="discountInput" type="number" min="0" max="100" value="0" step="1">
+            <span class="muted">%</span>
+            <label class="toggle">
+              <span>الخصم لحظيًا</span>
+              <input id="applyDiscountToMessage" type="checkbox">
+              <span class="slider"></span>
+            </label>
+            <label class="toggle">
+              <span>تصحيح الراتب</span>
+              <input id="enableSalaryCorrection" type="checkbox">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div id="aiMountHere"></div>
+        <div id="afterAiHook"></div>
+      </section>
+
+      <section id="personCard" class="card person-card" style="display:none">
+        <div class="person-header">
+          <strong>بيانات صاحب الـID</strong>
+          <div class="person-actions">
+            <button id="copyMsgBtn" class="btn ghost">نسخ الرسالة</button>
+            <button id="colorAllBtn" class="btn ghost">تلوين الكل</button>
+          </div>
+        </div>
+        <div id="personNote" class="muted">—</div>
+        <textarea id="personMsg" rows="8" readonly></textarea>
+      </section>
+
+      <div id="logAnchor"></div>
+    </main>
+
+    <div class="bulk-area" id="bulkArea">
+      <div class="card" id="bulkToggleCard">
+        <div class="menu-buttons" style="gap:8px;">
+          <button id="bulkToggleBtn" class="btn primary" style="min-width:130px">تفعيل الأداة</button>
+        </div>
+        <div id="bulkToggleNote" class="muted" style="margin-top:6px">تظهر الأداة في الموبايل بعد التفعيل (20 نتيجة لكل صفحة).</div>
       </div>
 
-      <div class="row stretch" style="margin-top:10px">
-        <input id="bulkNewSheet" type="text" placeholder="اسم ورقة جديدة (داخل الإدارة)">
-        <button id="bulkCreateSheet" class="btn-ghost">إنشاء ورقة</button>
-      </div>
+      <div id="bulkMobileMount" class="span2"></div>
 
-      <div id="bulkExternalWrap" style="margin-top:12px; display:none">
-        <label class="small" style="display:block">ورقة الهدف (خارجي) <span id="bulkExternalFileLabel" class="muted"></span></label>
-        <div class="row" style="gap:6px; align-items:center">
-          <select id="bulkExternalTargetSheet" style="flex:1"></select>
-          <button id="bulkExternalRefreshSheets" class="btn-ghost" title="تحديث قائمة الأوراق الخارجية" style="flex:0 0 auto">↻</button>
-        </div>
-        <div class="row stretch" style="margin-top:8px">
-          <input id="bulkExternalNewSheet" type="text" placeholder="اسم ورقة جديدة (خارجية)">
-          <button id="bulkExternalCreateSheet" class="btn-ghost">إنشاء</button>
-        </div>
-        <div id="bulkExternalNote" class="muted" style="margin-top:6px"></div>
-      </div>
+      <div class="card" id="bulkCard">
+        <h3>أداة البحث الجماعي</h3>
+        <div class="bulk-note" id="bulkStatusText">ألصق IDs وسيتم التحليل تلقائيًا.</div>
 
-      <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap">
-        <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:180px">
-          <input id="bulkAdminColor" type="color" value="#fde68a"
-            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
-          <label class="small" style="margin:0">لون الإدارة</label>
+        <div class="row" style="gap:12px; flex-wrap:wrap; align-items:flex-end">
+          <div style="flex:1; min-width:180px">
+            <label class="field-label">النطاق</label>
+            <select id="bulkScope">
+              <option value="agent">الوكيل فقط</option>
+              <option value="both" selected>الإدارة + الوكيل</option>
+              <option value="all">الكل (يشمل الخارجي)</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:220px">
+            <label class="field-label">ورقة الهدف</label>
+            <div class="pill-row">
+              <select id="bulkTargetSheet" style="flex:1"></select>
+              <button id="bulkRefreshSheets" class="icon-btn" title="تحديث قائمة الأوراق" style="flex:0 0 auto">↻</button>
+            </div>
+          </div>
         </div>
-        <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:180px">
-          <input id="bulkWithdrawColor" type="color" value="#ddd6fe"
-            style="width:38px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0" />
-          <label class="small" style="margin:0">لون الوكيل / سحب الوكالة</label>
-        </div>
-      </div>
 
-      <div class="row" style="margin-top:12px; align-items:center; gap:12px; flex-wrap:wrap">
-        <div class="row" style="gap:8px; align-items:center">
-          <label class="small" style="margin:0">الخصم %</label>
+        <div class="pill-row" style="margin-top:10px">
+          <input id="bulkNewSheet" type="text" placeholder="اسم ورقة جديدة (داخل الإدارة)">
+          <button id="bulkCreateSheet" class="btn ghost">إنشاء ورقة</button>
+        </div>
+
+        <div id="bulkExternalWrap" style="margin-top:12px; display:none">
+          <label class="field-label">ورقة الهدف (خارجي) <span id="bulkExternalFileLabel" class="muted"></span></label>
+          <div class="pill-row">
+            <select id="bulkExternalTargetSheet" style="flex:1"></select>
+            <button id="bulkExternalRefreshSheets" class="icon-btn" title="تحديث قائمة الأوراق الخارجية" style="flex:0 0 auto">↻</button>
+          </div>
+          <div class="pill-row" style="margin-top:8px">
+            <input id="bulkExternalNewSheet" type="text" placeholder="اسم ورقة جديدة (خارجية)">
+            <button id="bulkExternalCreateSheet" class="btn ghost">إنشاء</button>
+          </div>
+          <div id="bulkExternalNote" class="muted" style="margin-top:6px"></div>
+        </div>
+
+        <div class="exec-group" style="margin-top:10px">
+          <div class="color-row" style="gap:14px;flex-wrap:wrap">
+            <div class="color-chip" style="min-width:180px">
+              <span>لون الإدارة</span>
+              <input id="bulkAdminColor" type="color" value="#fde68a">
+            </div>
+            <div class="color-chip" style="min-width:180px">
+              <span>لون الوكيل / سحب الوكالة</span>
+              <input id="bulkWithdrawColor" type="color" value="#ddd6fe">
+            </div>
+          </div>
+        </div>
+
+        <div class="discount-row" style="margin-top:12px">
+          <label class="field-label" style="margin:0">الخصم %</label>
           <input id="bulkDiscount" type="number" min="0" max="100" value="0" step="1" style="width:110px">
+          <div class="muted" id="bulkDiscountNote">يُطبّق تلقائيًا على النتائج.</div>
         </div>
-        <div class="muted" id="bulkDiscountNote">يُطبّق تلقائيًا على النتائج.</div>
-      </div>
 
-      <div id="bulkPasteRow">
-        <textarea id="bulkIds" placeholder="ألصق عدة IDs (سطر لكل ID أو مفصولة بمسافات)"></textarea>
-        <button id="bulkPasteBtn" class="btn-blue">لصق ثم بحث</button>
-      </div>
-      <div id="bulkActionsRow">
-        <button id="bulkAnalyzeBtn" class="btn-green">تحليل</button>
-        <button id="bulkExecuteBtn" class="btn-red" disabled>تنفيذ الكل</button>
-        <button id="bulkCopyAllBtn" class="btn-ghost" disabled>نسخ الكل</button>
-        <button id="bulkCopySalaryBtn" class="btn-ghost" disabled>نسخ الرواتب</button>
-        <button id="bulkResetBtn" class="btn-ghost">إعادة تعيين</button>
-      </div>
-
-      <div class="bulk-progress">
-        <div id="bulkProgressBar" class="bulk-progress-bar"></div>
-      </div>
-      <div class="bulk-progress-text">
-        <span id="bulkProgressLabel">0%</span>
-        <span id="bulkSummaryText"></span>
-      </div>
-
-      <div class="bulk-counters">
-        <div>عدد الإدخالات: <b id="bulkCountTotal">0</b></div>
-        <div>ملوّن: <b id="bulkCountColored">0</b></div>
-        <div>غير ملوّن: <b id="bulkCountUncolored">0</b></div>
-        <div>مجموع الرواتب: <b id="bulkSalarySum">0</b></div>
-      </div>
-
-      <table class="bulk-table" style="margin-top:12px">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>ID</th>
-            <th>الراتب</th>
-            <th>الحالة</th>
-            <th>ملوّن؟</th>
-          </tr>
-        </thead>
-        <tbody id="bulkResultsBody"></tbody>
-      </table>
-      <div id="bulkPagination" class="bulk-pagination">
-        <button id="bulkPrevBtn" class="bulk-page-btn">‹ السابق</button>
-        <span id="bulkPageInfo" class="bulk-page-info"></span>
-        <button id="bulkNextBtn" class="bulk-page-btn">التالي ›</button>
-      </div>
-      <div id="bulkEmptyState" class="bulk-empty">لا توجد نتائج بعد.</div>
-    </div>
-
-    <!-- ===== أدوات سريعة (بطاقات مستقلة، نفس الـ IDs القديمة) ===== -->
-<style>
-  /* شبكة مرتّبة للبطاقات، تتكيّف مع الموبايل */
-  #quickTools.qtools-wrap{
-    padding:0; background:transparent; border:0; box-shadow:none;
-  }
-  #qtGrid{
-    display:grid; gap:10px;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  }
-  #qtGrid .card{
-    margin:0; /* نمنع تكرار الهوامش */
-  }
-
-  /* عنوان صغير أنيق داخل كل بطاقة (اختياري) */
-  .qt-title{
-    font-size:14px; font-weight:800; margin:0 0 8px 0;
-  }
-
-  /* صف داخلي مرتب */
-  .qt-row{
-    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-  }
-
-  /* كبس زر صغير للعداد */
-  .qt-pill{
-    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-    border:1px solid var(--border); border-radius:12px; padding:8px 12px;
-  }
-
-  /* في الموبايل: عرض كامل تلقائي */
-  @media (max-width:1059px){
-    #qtGrid{ grid-template-columns: 1fr; }
-    .qt-row .btn-ghost, .qt-row button, .qt-row label{ width:100%; }
-    .qt-pill{ width:100%; justify-content:space-between; }
-  }
-</style>
-
-<div id="quickTools" class="qtools-wrap card span2">
-  <div id="qtGrid">
-
-    <!-- بطاقة: الوضع -->
-    <div class="card" id="qtModeCard">
-      <div class="qt-title">الوضع</div>
-      <div class="qt-row">
-        <button id="qtMode" class="btn-ghost">🌙 تفعيل الوضع الداكن</button>
-      </div>
-    </div>
-
-    <!-- بطاقة: إخفاء التحميل -->
-    <div class="card" id="qtHideLoadCard">
-      <div class="qt-title">التحميل</div>
-      <div class="qt-row">
-        <button id="qtHideLoad" class="btn-ghost">🙈 إخفاء قسم التحميل</button>
-      </div>
-    </div>
-
-    <!-- بطاقة: قسم البيانات -->
-    <div class="card" id="qtPersonCard">
-      <div class="qt-title">قسم البيانات</div>
-      <div class="qt-row" style="gap:8px">
-        <button id="qtHidePerson" class="btn-ghost">🙈 إخفاء قسم البيانات</button>
-        <label class="ios-toggle" style="margin-inline-start:6px">
-          <span class="switch-label">تعطيل قسم البيانات</span>
-          <input id="qtDisablePerson" type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- بطاقة: العدّاد -->
-    <div class="card" id="qtCounterCard">
-      <div class="qt-title">العدّاد</div>
-      <div class="qt-row">
-        <div class="qt-pill" style="flex:1">
-          <span class="muted">الملوّن:</span><b id="qtColored">—</b>
-          <span style="width:10px"></span>
-          <span class="muted">غير الملوّن:</span><b id="qtUncolored">—</b>
+        <div id="bulkPasteRow">
+          <textarea id="bulkIds" placeholder="ألصق عدة IDs (سطر لكل ID أو مفصولة بمسافات)"></textarea>
+          <button id="bulkPasteBtn" class="btn primary">لصق ثم بحث</button>
         </div>
-        <button id="qtRefreshCnt" class="btn-ghost" title="تحديث العدّاد">↻ تحديث</button>
+        <div id="bulkActionsRow">
+          <button id="bulkAnalyzeBtn" class="btn primary">تحليل</button>
+          <button id="bulkExecuteBtn" class="btn ghost" disabled>تنفيذ الكل</button>
+          <button id="bulkCopyAllBtn" class="btn ghost" disabled>نسخ الكل</button>
+          <button id="bulkCopySalaryBtn" class="btn ghost" disabled>نسخ الرواتب</button>
+          <button id="bulkResetBtn" class="btn ghost">إعادة تعيين</button>
+        </div>
+
+        <div class="bulk-progress">
+          <div id="bulkProgressBar" class="bulk-progress-bar"></div>
+        </div>
+        <div class="bulk-progress-text">
+          <span id="bulkProgressLabel">0%</span>
+          <span id="bulkSummaryText"></span>
+        </div>
+
+        <div class="bulk-counters">
+          <div>عدد الإدخالات: <b id="bulkCountTotal">0</b></div>
+          <div>ملوّن: <b id="bulkCountColored">0</b></div>
+          <div>غير ملوّن: <b id="bulkCountUncolored">0</b></div>
+          <div>مجموع الرواتب: <b id="bulkSalarySum">0</b></div>
+        </div>
+
+        <table class="bulk-table" style="margin-top:12px">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ID</th>
+              <th>الراتب</th>
+              <th>الحالة</th>
+              <th>ملوّن؟</th>
+            </tr>
+          </thead>
+          <tbody id="bulkResultsBody"></tbody>
+        </table>
+        <div id="bulkPagination" class="bulk-pagination">
+          <button id="bulkPrevBtn" class="bulk-page-btn">‹ السابق</button>
+          <span id="bulkPageInfo" class="bulk-page-info"></span>
+          <button id="bulkNextBtn" class="bulk-page-btn">التالي ›</button>
+        </div>
+        <div id="bulkEmptyState" class="bulk-empty">لا توجد نتائج بعد.</div>
       </div>
     </div>
   </div>
 
+  <div id="quickTools" class="menu-overlay">
+    <div class="menu-panel">
+      <button id="menuClose" class="menu-close" aria-label="إغلاق القائمة">×</button>
+      <div class="menu-header">القائمة</div>
+      <div id="loadCard" class="menu-buttons" style="gap:12px;">
+        <button id="reloadBtn" class="menu-btn accent">تحميل البيانات</button>
+        <div id="loadNote" class="menu-note muted"></div>
+      </div>
+      <div class="menu-buttons">
+        <button id="menuHome" class="menu-btn">الصفحة الرئيسية</button>
+        <button id="qtMode" class="menu-btn">🌙 وضع داكن</button>
+        <button id="menuBulk" class="menu-btn">أداة البحث الجماعي</button>
+        <button id="qtHidePerson" class="menu-btn">تفعيل قسم البيانات</button>
+      </div>
+      <label class="menu-switch">
+        <span>تعطيل قسم البيانات</span>
+        <input id="qtDisablePerson" type="checkbox">
+        <span class="slider"></span>
+      </label>
+      <button id="qtHideLoad" class="menu-link">إخفاء قسم التحميل</button>
+      <button id="qtRefreshCnt" class="menu-link">تحديث العدّاد</button>
+    </div>
   </div>
 
-  <script>
+<script>
     (function(){
     // عناصر عامة
     const reloadBtn      = document.getElementById('reloadBtn');
     const loadNote       = document.getElementById('loadNote');
+    const loadCardSection= document.getElementById('loadCard');
+    const menuOverlay    = document.getElementById('quickTools');
+    const menuToggle     = document.getElementById('menuToggle');
+    const menuClose      = document.getElementById('menuClose');
+    const menuHome       = document.getElementById('menuHome');
+    const menuBulk       = document.getElementById('menuBulk');
 
     const idInput        = document.getElementById('idInput');
     const pasteSearchBtn = document.getElementById('pasteSearchBtn');
@@ -524,6 +458,8 @@ html, body { max-width: 100%; overflow-x: hidden; }
     const multiText   = document.getElementById('multiText');
     const extraDupInfo= document.getElementById('extraDupInfo');
     const justColored = Object.create(null);
+    const bodyEl = document.body;
+    const BULK_AREA_KEY = 'home_show_bulk';
 
     const bulkCardEl         = document.getElementById('bulkCard');
     const bulkScope          = document.getElementById('bulkScope');
@@ -565,11 +501,96 @@ html, body { max-width: 100%; overflow-x: hidden; }
     const bulkToggleBtn      = document.getElementById('bulkToggleBtn');
     const bulkToggleNote     = document.getElementById('bulkToggleNote');
     const bulkMobileMount    = document.getElementById('bulkMobileMount');
+    const bulkAreaWrap       = document.getElementById('bulkArea');
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c] || c));
+    }
+
+    function clearAdvNote(){
+      if (!advNote) return;
+      advNote.classList.remove('note-success');
+      advNote.classList.add('muted');
+      advNote.innerHTML = '';
+    }
+
+    function showExecutionSuccess(id, mode, serverMessage){
+      if (!advNote) return;
+      const areas = [];
+      if (mode === 'both'){ areas.push('الإدارة', 'الوكيل'); }
+      else if (mode === 'agent'){ areas.push('الوكيل'); }
+      else if (mode === 'admin'){ areas.push('الإدارة'); }
+      else { areas.push('الهدف المحدد'); }
+      const areaText = Array.from(new Set(areas.filter(Boolean))).join(' و ') || '—';
+      advNote.classList.remove('muted');
+      advNote.classList.add('note-success');
+      const parts = [
+        `<strong>تم التنفيذ على ID ${escapeHtml(id)}</strong>`,
+        `<div>تم التلوين في: ${escapeHtml(areaText)}.</div>`
+      ];
+      const trimmedMessage = String(serverMessage || '').trim();
+      if (trimmedMessage && trimmedMessage !== 'تم ✅') {
+        parts.push(`<div class="muted">${escapeHtml(trimmedMessage)}</div>`);
+      }
+      advNote.innerHTML = parts.join('');
+    }
+
+    function resolveStatusClass(baseStatus){
+      const s = String(baseStatus || '').toLowerCase();
+      if (!s) return 'status-pill--default';
+      if (s.includes('سحب وكالة')) return 'status-pill--withdraw';
+      if (s.includes('رات')) return 'status-pill--salary';
+      if (s.includes('غير موجود')) return 'status-pill--missing';
+      if (s.includes('ادارة')) return 'status-pill--admin';
+      if (s.includes('وكالة')) return 'status-pill--agent';
+      return 'status-pill--default';
+    }
+
+    function openMenu(){ bodyEl.classList.add('menu-open'); }
+    function closeMenu(){ bodyEl.classList.remove('menu-open'); }
+
+    function updateMenuBulkLabel(){
+      if (!menuBulk) return;
+      const active = bodyEl.classList.contains('show-bulk');
+      menuBulk.textContent = active ? 'إخفاء أداة البحث الجماعي' : 'أداة البحث الجماعي';
+    }
+
+    function setBulkAreaState(active){
+      bodyEl.classList.toggle('show-bulk', !!active);
+      updateMenuBulkLabel();
+      try { localStorage.setItem(BULK_AREA_KEY, active ? '1' : '0'); } catch(_){}
+    }
 
     const bulkCardHome = bulkCardEl ? document.createComment('bulk-card-home') : null;
     if (bulkCardEl && bulkCardEl.parentNode && bulkCardHome) {
       bulkCardEl.parentNode.insertBefore(bulkCardHome, bulkCardEl);
     }
+
+    try {
+      if (localStorage.getItem(BULK_AREA_KEY) === '1') bodyEl.classList.add('show-bulk');
+    } catch(_){ }
+    updateMenuBulkLabel();
+
+    if (menuToggle) menuToggle.addEventListener('click', ()=>{
+      if (bodyEl.classList.contains('menu-open')) closeMenu();
+      else openMenu();
+    });
+    if (menuClose) menuClose.addEventListener('click', closeMenu);
+    if (menuOverlay) menuOverlay.addEventListener('click', e=>{ if (e.target === menuOverlay) closeMenu(); });
+    if (menuHome) menuHome.addEventListener('click', ()=>{
+      closeMenu();
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_){ window.scrollTo(0,0); }
+    });
+    if (menuBulk) menuBulk.addEventListener('click', ()=>{
+      const next = !bodyEl.classList.contains('show-bulk');
+      setBulkAreaState(next);
+      closeMenu();
+      if (next){
+        const target = bulkAreaWrap || bulkCardEl || bulkToggleBtn;
+        if (target){ setTimeout(()=>{ try { target.scrollIntoView({ behavior:'smooth', block:'start' }); } catch(_){ } }, 200); }
+      }
+    });
+    document.addEventListener('keydown', e=>{ if (e.key === 'Escape') closeMenu(); });
 
     // عنصر لعرض اسم العميل (من عمود B)
     const nameText   = document.getElementById('nameText');
@@ -604,6 +625,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
     const qtUncolored = document.getElementById('qtUncolored');
     const qtMode = document.getElementById('qtMode');
     const qtHide = document.getElementById('qtHideLoad');
+    const qtRefreshCntBtn = document.getElementById('qtRefreshCnt');
 
     const qtHidePerson = document.getElementById('qtHidePerson');
     const qtDisablePerson = document.getElementById('qtDisablePerson');
@@ -742,8 +764,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
     function updateBulkToggleUI(){
       if (bulkToggleBtn){
         bulkToggleBtn.textContent = bulkMobileEnabled ? 'إيقاف الأداة' : 'تفعيل الأداة';
-        bulkToggleBtn.classList.toggle('btn-blue', !bulkMobileEnabled);
-        bulkToggleBtn.classList.toggle('btn-red', bulkMobileEnabled);
+        bulkToggleBtn.classList.toggle('btn-danger', bulkMobileEnabled);
       }
       if (bulkToggleNote){
         if (isMobileLayout()){
@@ -1267,26 +1288,27 @@ html, body { max-width: 100%; overflow-x: hidden; }
     function isPersonHidden(){ return localStorage.getItem('hide_person_section') === '1'; }
 
     function applyPersonVisibility(){
-      qtDisablePerson.checked = isPersonFeatureDisabled();
-      const hidden = isPersonHidden() || isPersonFeatureDisabled();
-      personCardEl.style.display = hidden ? 'none' : '';
-      if (isPersonFeatureDisabled()){
+      const disabled = isPersonFeatureDisabled();
+      const hidden = isPersonHidden() || disabled;
+      if (qtDisablePerson) qtDisablePerson.checked = disabled;
+      if (personCardEl) personCardEl.style.display = hidden ? 'none' : '';
+      bodyEl.classList.toggle('data-active', !hidden);
+      if (disabled){
         personMsg.value = '';
         personNote.textContent = '—';
-        copyMsgBtn.disabled = true;
-        colorAllBtn.disabled = true;
-      } else {
-        copyMsgBtn.disabled = false;
-        colorAllBtn.disabled = false;
       }
-      qtHidePerson.textContent = hidden ? '👀 إظهار قسم البيانات' : '🙈 إخفاء قسم البيانات';
+      copyMsgBtn.disabled = disabled;
+      colorAllBtn.disabled = disabled;
+      if (qtHidePerson) qtHidePerson.textContent = hidden ? 'تفعيل قسم البيانات' : 'إخفاء قسم البيانات';
     }
-    qtHidePerson.addEventListener('click', ()=>{
+    if (qtHidePerson) qtHidePerson.addEventListener('click', ()=>{
+      if (isPersonFeatureDisabled()) localStorage.setItem('disable_person_feature', '0');
       const cur = isPersonHidden();
       localStorage.setItem('hide_person_section', cur ? '0':'1');
       applyPersonVisibility();
+      if (menuOverlay) closeMenu();
     });
-    qtDisablePerson.addEventListener('change', ()=>{
+    if (qtDisablePerson) qtDisablePerson.addEventListener('change', ()=>{
       const en = !!qtDisablePerson.checked;
       localStorage.setItem('disable_person_feature', en ? '1':'0');
       applyPersonVisibility();
@@ -1338,8 +1360,15 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
     /******** تحميل البيانات ********/
     function setLoadBtnState(ok){
-      if (ok===true){ reloadBtn.classList.remove('btn-red'); reloadBtn.classList.add('btn-green'); }
-      else if (ok===false){ reloadBtn.classList.remove('btn-green'); reloadBtn.classList.add('btn-red'); }
+      if (ok===true){
+        reloadBtn.classList.add('menu-btn--ok');
+        reloadBtn.classList.remove('menu-btn--error');
+      } else if (ok===false){
+        reloadBtn.classList.add('menu-btn--error');
+        reloadBtn.classList.remove('menu-btn--ok');
+      } else {
+        reloadBtn.classList.remove('menu-btn--ok','menu-btn--error');
+      }
     }
     function loadData(){
       setLoadBtnState(false);
@@ -1372,7 +1401,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
         })
         .loadDataIntoCache();
     }
-    reloadBtn.addEventListener('click', loadData);
+    reloadBtn.addEventListener('click', ()=>{ closeMenu(); loadData(); });
     createSheetBtn.addEventListener('click', ()=>{
   const name = (newSheetName.value || '').trim();
   if (!name){ advNote.textContent = '⚠️ اكتب اسم ورقة جديدة'; return; }
@@ -1485,22 +1514,21 @@ html, body { max-width: 100%; overflow-x: hidden; }
     function clearDupUI(){
       dupBadge.style.display = 'none';
       dupBadge.textContent = 'مكرر';
+      dupBadge.className = 'status-pill status-pill--dup';
       extraDupInfo.textContent = '';
     }
     function renderLoading(){
       clearDupUI();
-      statusBadge.className = 'badge badge--loading';
+      statusBadge.className = 'status-pill status-pill--loading';
       statusBadge.textContent = 'جارٍ البحث…';
       amountText.textContent = '⏳';
       multiText.textContent = '';
       if (nameText) nameText.textContent = '—';
+      clearAdvNote();
     }
     function applyBadges(baseStatus, duplicateLabel, hasSalaries){
-      let baseClass = 'badge--agent';
-      if (baseStatus.includes('ادارة') && !hasSalaries) baseClass = 'badge--admin';
-      else if (baseStatus.includes('سحب وكالة'))      baseClass = 'badge--withdraw';
-      else if (baseStatus.includes('غير موجود'))      baseClass = 'badge--missing';
-      statusBadge.className = 'badge ' + baseClass;
+      const baseClass = resolveStatusClass(baseStatus);
+      statusBadge.className = 'status-pill ' + baseClass;
       statusBadge.textContent = baseStatus || '—';
       if (duplicateLabel){ dupBadge.style.display='inline-block'; dupBadge.textContent=duplicateLabel; }
       else dupBadge.style.display='none';
@@ -1677,6 +1705,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 
     /******** تنفيذ ذكي ********/
     function runAdvanced() {
+      clearAdvNote();
       advNote.textContent = '... جارٍ التنفيذ';
       const id = idInput.value.trim();
       if (!id) { advNote.textContent = '⚠️ أدخل ID أولاً'; return; }
@@ -1690,7 +1719,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
 
       google.script.run
         .withSuccessHandler(res => {
-          advNote.textContent = res?.message || 'تم ✅';
+          showExecutionSuccess(id, targetMode, res?.message);
           flash(execCard, 'flash-green');
           if (localMap && localMap[id]) {
             localMap[id].aCol = true;
@@ -1701,6 +1730,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
           refreshCountsLive();
         })
         .withFailureHandler(err => {
+          clearAdvNote();
           advNote.textContent = 'خطأ: ' + (err?.message || '');
         })
         .applyAdvancedAction(id, sheet, adminColor.value, withdrawColor.value, targetMode);
@@ -1722,7 +1752,7 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
     }
     function applyModeLabel(){
       const isDark = document.body.classList.contains('dark');
-      qtMode.textContent = isDark ? '☀️ وضع فاتح' : '🌙 وضع داكن';
+      if (qtMode) qtMode.textContent = isDark ? '☀️ تفعيل الوضع الفاتح' : '🌙 تفعيل الوضع الداكن';
     }
     try { if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark'); } catch(_){}
     applyModeLabel();
@@ -1730,20 +1760,21 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
       const isDark = document.body.classList.toggle('dark');
       applyModeLabel();
       try { localStorage.setItem('darkMode', isDark ? 'true':'false'); } catch(_){}
+      closeMenu();
     });
     function applyHideState(){
-      const loadCard = document.getElementById('loadCard');
       const hide = (localStorage.getItem('hide_loadsec') === '1');
-      if (loadCard) loadCard.style.display = hide ? 'none' : '';
-      qtHide.textContent = hide ? '👀 إظهار التحميل' : '🙈 إخفاء التحميل';
+      if (loadCardSection) loadCardSection.style.display = hide ? 'none' : '';
+      if (qtHide) qtHide.textContent = hide ? 'إظهار قسم التحميل' : 'إخفاء قسم التحميل';
     }
     applyHideState();
-    qtHide.addEventListener('click', ()=>{
+    if (qtHide) qtHide.addEventListener('click', ()=>{
       const cur = localStorage.getItem('hide_loadsec') === '1';
       localStorage.setItem('hide_loadsec', cur ? '0':'1');
       applyHideState();
+      closeMenu();
     });
-    document.getElementById('qtRefreshCnt').addEventListener('click', refreshCountsLive);
+    if (qtRefreshCntBtn) qtRefreshCntBtn.addEventListener('click', ()=>{ refreshCountsLive(); closeMenu(); });
 
     /******** البحث (محلي أولاً ثم السيرفر) ********/
     let querySeq = 0;
@@ -1908,118 +1939,6 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
     window.renderLoading = renderLoading;
     window.justColored = justColored;
   })();
-  </script>
-  <style>
-@media (max-width: 1059px){
-  #quickTools{
-    grid-column: 1 / -1;
-    grid-row: auto;
-    margin-top: 12px;
-  }
-}
-</style>
-<script>
-(function(){
-  function placeQT(){
-    var qt = document.getElementById('quickTools');
-    var cont = document.querySelector('.container');
-    if(!qt || !cont) return;
-    var w = Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
-    if (w <= 1059) cont.appendChild(qt);
-  }
-  window.addEventListener('load', placeQT);
-  window.addEventListener('resize', function(){
-    clearTimeout(window.__qt_fix);
-    window.__qt_fix = setTimeout(placeQT, 150);
-  });
-})();
-</script>
-<style>
-/* تحسين تنسيق قسم التنفيذ على الشاشات الصغيرة */
-@media (max-width: 640px){
-  /* خلي صفوف القسم قابلة للّف */
-  #execCard .row{ flex-wrap: wrap !important; }
-
-  /* صف (الهدف + التنفيذ + تحديث) */
-  #execCard .row:first-of-type label.small{
-    width: 100% !important;
-    min-width: 0 !important;
-    display: block;
-    margin: 0 0 6px 0 !important;
-    font-size: 12px;
-    opacity: .9;
-  }
-  #execCard #sheetSelect,
-  #execCard #targetMode{
-    flex: 1 1 100% !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    height: 40px;
-  }
-  #execCard #refreshSheetsBtn{
-    order: 3;                /* نزّله تحت الحقول */
-    width: 100%;
-    margin-top: 6px;
-  }
-
-  /* صف الألوان (لون الإدارة / سحب وكالة) */
-  #execCard .row[style*="flex-wrap:wrap"] > div{
-    flex: 1 1 100% !important;
-  }
-  #execCard input[type="color"]{
-    width: 40px !important;
-    height: 34px !important;
-  }
-
-  /* صف إنشاء ورقة جديدة */
-  #execCard #newSheetName{
-    flex: 1 1 100% !important;
-    width: 100% !important;
-  }
-  #execCard #createSheetBtn{
-    flex: 0 0 100% !important;
-    width: 100% !important;
-    margin-top: 6px;
-  }
-
-  /* صف الخصم + السويتشات */
-  #execCard input[type="number"]{
-    width: 100% !important;
-    flex: 1 1 100% !important;
-    height: 40px;
-  }
-  #execCard .toggle-chip{
-    flex: 1 1 48% !important;
-    justify-content: space-between;
-    margin-top: 6px;
-  }
-
-  /* زر التنفيذ: مهو كامل أصلاً، نزود راحة على الموبايل */
-  #execCard #advRunBtn{
-    padding: 14px 16px !important;
-    font-size: 16px !important;
-    border-radius: 12px !important;
-  }
-
-  /* ملاحظات التنفيذ يظهر واضح وتحت الزر */
-  #execCard #advNote{ font-size: 12px; line-height: 1.4; }
-}
-</style>
-
-<script>
-/* ترتيب بسيط: ضمن الموبايل، حط زر التحديث بعد القائمتين دائماً */
-(function(){
-  function fixAdvLayout(){
-    var w = Math.min(window.innerWidth, document.documentElement.clientWidth||window.innerWidth);
-    if (w > 640) return;
-    var row = document.querySelector('#execCard .row');
-    var btn = document.getElementById('refreshSheetsBtn');
-    if(row && btn) row.appendChild(btn);
-  }
-  window.addEventListener('load', fixAdvLayout);
-  window.addEventListener('resize', function(){ clearTimeout(window.__advFix); window.__advFix=setTimeout(fixAdvLayout,150); });
-})();
-</script>
 <!-- ===== /Bulk IDs — Advanced ===== -->
 <!-- شارة حالة الإنترنت (فحص ذكي، لا يمنع التنفيذ عند البطء) -->
 <style>
@@ -2223,6 +2142,8 @@ if (res.status === 'error'){ applyBadges('خطأ', null, false); amountText.text
   var mount = document.getElementById('lgpMount');
   function resolveHost(){
     if (!mount) return null;
+    var anchor = document.getElementById('logAnchor');
+    if (anchor) return anchor;
     var mobile = document.body.classList.contains('bulk-mobile-active') && window.matchMedia('(max-width: 1200px)').matches;
     if (mobile){
       var mobileHost = document.getElementById('bulkMobileMount');
