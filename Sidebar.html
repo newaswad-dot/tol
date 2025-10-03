@@ -1429,6 +1429,7 @@
       if (reloadBtn) reloadBtn.click();
       else loadData();
     });
+    reloadBtn.addEventListener('click', ()=>{ closeMenu(); loadData(); });
     createSheetBtn.addEventListener('click', ()=>{
   const name = (newSheetName.value || '').trim();
   if (!name){ advNote.textContent = '⚠️ اكتب اسم ورقة جديدة'; return; }
