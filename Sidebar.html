@@ -189,6 +189,13 @@
     </header>
 
     <main class="main-flow">
+      <section id="loadCard" class="card load-card">
+        <div class="load-actions">
+          <button id="reloadBtn" class="btn primary load-btn">تحميل البيانات</button>
+        </div>
+        <div id="loadNote" class="muted load-note"></div>
+      </section>
+
       <section id="resultsBox" class="card status-card">
         <div class="status-header">
           <span id="statusBadge" class="status-pill status-pill--loading">—</span>
@@ -415,9 +422,6 @@
     <div class="menu-panel">
       <button id="menuClose" class="menu-close" aria-label="إغلاق القائمة">×</button>
       <div class="menu-header">القائمة</div>
-      <div id="loadCard" class="menu-buttons" style="gap:12px;">
-        <button id="reloadBtn" class="menu-btn accent">تحميل البيانات</button>
-        <div id="loadNote" class="menu-note muted"></div>
       </div>
       <div class="menu-buttons">
         <button id="menuHome" class="menu-btn">الصفحة الرئيسية</button>
@@ -439,6 +443,7 @@
     (function(){
     // عناصر عامة
     const reloadBtn      = document.getElementById('reloadBtn');
+    const reloadBtnMenu  = document.getElementById('reloadBtnMenu');
     const loadNote       = document.getElementById('loadNote');
     const loadCardSection= document.getElementById('loadCard');
     const menuOverlay    = document.getElementById('quickTools');
@@ -1360,47 +1365,45 @@
 
     /******** تحميل البيانات ********/
     function setLoadBtnState(ok){
-      if (ok===true){
-        reloadBtn.classList.add('menu-btn--ok');
-        reloadBtn.classList.remove('menu-btn--error');
-      } else if (ok===false){
-        reloadBtn.classList.add('menu-btn--error');
-        reloadBtn.classList.remove('menu-btn--ok');
-      } else {
-        reloadBtn.classList.remove('menu-btn--ok','menu-btn--error');
       }
     }
     function loadData(){
       setLoadBtnState(false);
-      loadNote.textContent = '⏳ جارٍ تحميل البيانات…';
+      setLoadNote('⏳ جارٍ تحميل البيانات…');
       google.script.run
         .withSuccessHandler(srv=>{
           const baseMsg = srv?.message || 'تم التحميل من السيرفر.';
           google.script.run
             .withSuccessHandler(res=>{
               if(!res || !res.ok){
-                loadNote.textContent = baseMsg + ' | ⚠️ فشل المحلي: ' + (res?.message||'');
+                setLoadNote(baseMsg + ' | ⚠️ فشل المحلي: ' + (res?.message||''));
                 setLoadBtnState(false);
                 return;
               }
               localMap = res.map || null;
               const st = res.stats || {};
-              loadNote.textContent = `${baseMsg} | محلي: ${st.agentRows||0} صف / ${st.agentUnique||0} ID.`;
+              setLoadNote(`${baseMsg} | محلي: ${st.agentRows||0} صف / ${st.agentUnique||0} ID.`);
               setLoadBtnState(true);
               refreshCountsLive();
             })
             .withFailureHandler(err=>{
-              loadNote.textContent = baseMsg + ' | ⚠️ خطأ بالمحلي: ' + (err?.message||'');
+              setLoadNote(baseMsg + ' | ⚠️ خطأ بالمحلي: ' + (err?.message||''));
               setLoadBtnState(false);
             })
             .getSearchSnapshotLight();
         })
         .withFailureHandler(err=>{
-          loadNote.textContent = '⚠️ خطأ بالتحميل: ' + (err?.message||'');
+          setLoadNote('⚠️ خطأ بالتحميل: ' + (err?.message||''));
           setLoadBtnState(false);
         })
         .loadDataIntoCache();
     }
+    if (reloadBtn) reloadBtn.addEventListener('click', ()=>{ closeMenu(); loadData(); });
+    if (reloadBtnMenu) reloadBtnMenu.addEventListener('click', ()=>{
+      closeMenu();
+      if (reloadBtn) reloadBtn.click();
+      else loadData();
+    });
     reloadBtn.addEventListener('click', ()=>{ closeMenu(); loadData(); });
     createSheetBtn.addEventListener('click', ()=>{
   const name = (newSheetName.value || '').trim();
